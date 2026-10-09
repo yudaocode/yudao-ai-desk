@@ -1,0 +1,13 @@
+node_modules
+out
+release
+src/main
+src/preload
+src/shared
+src/renderer/src/api
+src/renderer/src/types
+src/renderer/src/utils
+src/renderer/src/composables/useCodeCopy.ts
+src/renderer/src/composables/useHighlight.ts
+src/renderer/src/composables/useMarkdown.ts
+src/renderer/src/composables/useToolView.ts

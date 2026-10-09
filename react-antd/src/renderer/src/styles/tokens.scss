@@ -1,0 +1,102 @@
+/* 设计令牌：默认浅色（参考 ChatGPT 黑白灰配色），并保留深色主题 */
+:root {
+  /* Yudao AI Desk 自绘组件变量 */
+  --desk-bg: #ffffff;
+  --desk-bg-elevated: #f7f7f8;
+  --desk-sidebar: #f9f9f9;
+  --desk-border: #ececec;
+  --desk-border-soft: rgba(0, 0, 0, 0.06);
+  --desk-text: #0d0d0d;
+  --desk-text-secondary: #5d5d5d;
+  --desk-text-tertiary: #8e8e8e;
+  --desk-primary: #0d0d0d;
+  --desk-primary-hover: #2f2f2f;
+  --desk-primary-soft: rgba(13, 13, 13, 0.06);
+  /* 主色背景上的对比文字（黑白灰体系下浅色主题用白） */
+  --desk-primary-contrast: #ffffff;
+  --desk-bubble-user: #f4f4f4;
+  --desk-bubble-user-text: #0d0d0d;
+  --desk-bubble-assistant: #f4f4f4;
+  --desk-danger: #d93025;
+  --desk-warning: #e6a23c;
+  /* 代码块：浅色主题用浅灰底 + 深色字（参考 GitHub Light） */
+  --desk-code-bg: #f6f8fa;
+  --desk-code-text: #1f2328;
+  --desk-code-border: #d0d7de;
+  --desk-code-inline-bg: rgba(27, 31, 36, 0.06);
+  /* 文本选区（GitHub 浅色） */
+  --desk-selection: rgba(84, 174, 255, 0.4);
+  /* 语法高亮 token 色（参考 GitHub Light） */
+  --code-red: #cf222e;
+  --code-purple: #8250df;
+  --code-blue: #0550ae;
+  --code-string: #0a3069;
+  --code-orange: #953800;
+  --code-comment: #6e7781;
+  --code-green: #116329;
+  --code-yellow: #735c0f;
+  --code-subst: #1f2328;
+  /* 右侧顶部标题栏高度（左侧 Logo 顶部与之下的正文区顶部对齐） */
+  --desk-header-height: 45px;
+  --desk-radius-sm: 10px;
+  --desk-radius: 16px;
+  --desk-radius-lg: 22px;
+  --desk-shadow: 0 4px 18px rgba(0, 0, 0, 0.06);
+  /* 分段选中态（主题/语言）与浅色主按钮（弱化黑色，观感柔和） */
+  --desk-segment-bg: #e6e6e6;
+  --desk-segment-text: #1a1a1a;
+  --desk-segment-border: #d8d8d8;
+  --desk-btn-bg: #e6e6e6;
+  --desk-btn-bg-hover: #d8d8d8;
+  --desk-btn-text: #1a1a1a;
+  /* 开关激活色：柔和中性灰，避免纯黑且与关闭态有区分 */
+  --desk-switch-on: #9a9a9a;
+
+  /* Element Plus 主题对齐（黑白灰） */
+}
+
+:root.dark {
+  --desk-bg: #1e1e1e;
+  --desk-bg-elevated: #262626;
+  --desk-sidebar: #171717;
+  --desk-border: #333333;
+  --desk-border-soft: rgba(255, 255, 255, 0.09);
+  --desk-text: #ececec;
+  --desk-text-secondary: #b0b0b0;
+  --desk-text-tertiary: #8a8a8a;
+  /* 深色主题沿用黑白灰：主色取浅灰，主色背景用深色文字保证对比度 */
+  --desk-primary: #e8e8e8;
+  --desk-primary-hover: #ffffff;
+  --desk-primary-soft: rgba(255, 255, 255, 0.08);
+  --desk-primary-contrast: #141414;
+  --desk-bubble-user: #303030;
+  --desk-bubble-user-text: #ececec;
+  --desk-bubble-assistant: #262626;
+  --desk-danger: #f2555a;
+  /* 代码块：深色主题用深灰底 + 浅色字（参考 GitHub Dark） */
+  --desk-code-bg: #161b22;
+  --desk-code-text: #e6edf3;
+  --desk-code-border: #30363d;
+  --desk-code-inline-bg: rgba(110, 118, 129, 0.4);
+  /* 文本选区（GitHub 深色） */
+  --desk-selection: rgba(56, 139, 253, 0.4);
+  /* 语法高亮 token 色（参考 GitHub Dark） */
+  --code-red: #ff7b72;
+  --code-purple: #d2a8ff;
+  --code-blue: #79c0ff;
+  --code-string: #a5d6ff;
+  --code-orange: #ffa657;
+  --code-comment: #8b949e;
+  --code-green: #7ee787;
+  --code-yellow: #f2cc60;
+  --code-subst: #e6edf3;
+  --desk-shadow: 0 6px 24px rgba(0, 0, 0, 0.45);
+  /* 深色主题：选中态/主按钮取中灰底 + 浅色字，保证与未选中有区分度 */
+  --desk-segment-bg: #3a3a3a;
+  --desk-segment-text: #ffffff;
+  --desk-segment-border: #4a4a4a;
+  --desk-btn-bg: #3a3a3a;
+  --desk-btn-bg-hover: #484848;
+  --desk-btn-text: #f2f2f2;
+  --desk-switch-on: #a8a8a8;
+}

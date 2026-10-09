@@ -1,0 +1,389 @@
+/* modules/settings/pages/index.vue */
+@scope (.settings-page, .settings-dialog) {
+  :scope.settings-page {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    /* 字号与左侧菜单保持一致（14px），统一按钮与主要文案 */
+    font-size: 14px;
+  }
+
+  /* 供应商弹窗（portal 到 body，以 settings-dialog 根作用域命中），字号与左侧菜单一致 */
+  :scope.settings-dialog {
+    font-size: 14px;
+  }
+
+  .settings-header {
+    height: var(--desk-header-height);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 24px;
+    border-bottom: 1px solid var(--desk-border);
+    /* 顶栏可拖拽移动窗口（返回按钮除外） */
+    -webkit-app-region: drag;
+  }
+
+  /* 侧栏折叠后标题栏顶到窗口最左侧：macOS 下为红黄绿按钮预留宽度，避免与折叠按钮重叠 */
+  .settings-header.mac-collapsed {
+    padding-left: 80px;
+  }
+
+  .settings-header .ant-btn {
+    -webkit-app-region: no-drag;
+  }
+
+  .settings-title {
+    font-size: 16px;
+    font-weight: 600;
+  }
+
+  .settings-body {
+    flex: 1;
+  }
+
+  .settings-inner {
+    max-width: 940px;
+    margin: 0 auto;
+    padding: 28px 32px 48px;
+  }
+
+  .field-hint {
+    margin-top: 6px;
+    font-size: 13px;
+    color: var(--desk-text-tertiary);
+    font-family: 'SFMono-Regular', ui-monospace, Menlo, Consolas, monospace;
+  }
+
+  .settings-form {
+    max-width: 640px;
+  }
+
+  /* 表单底部操作按钮（个性化：保存 / 恢复默认） */
+  .form-actions {
+    display: flex;
+    gap: 8px;
+  }
+
+  .model-row {
+    display: flex;
+    gap: 12px;
+    width: 100%;
+  }
+
+  .provider-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 14px;
+  }
+
+  .provider-tip {
+    font-size: 12px;
+    color: var(--desk-text-tertiary);
+  }
+
+  /* 模型列表：单行展示、溢出省略，悬浮 tooltip 查看全部 */
+  .model-tags {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 6px;
+    overflow: hidden;
+    max-width: 100%;
+    white-space: nowrap;
+  }
+
+  .model-tags .model-tag {
+    margin: 0;
+    flex-shrink: 0;
+  }
+
+  .model-tooltip {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    max-height: 260px;
+    overflow-y: auto;
+  }
+
+  /* 供应商操作列：按钮不换行 */
+  .row-actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+  }
+
+  /* 模型动态多行编辑器 */
+  .model-editor {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .model-editor .model-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .model-editor .model-input {
+    flex: 1;
+  }
+
+  .model-editor .model-remove {
+    flex-shrink: 0;
+    color: var(--desk-text-tertiary);
+  }
+
+  .model-editor .model-actions {
+    display: flex;
+    gap: 8px;
+  }
+
+  /* 快捷键：快捷操作快捷键配置 */
+  .shortcuts {
+    margin-top: 28px;
+    padding-top: 20px;
+    border-top: 1px solid var(--desk-border);
+  }
+
+  .shortcuts-title {
+    font-size: 14px;
+    color: var(--desk-text-secondary);
+    margin-bottom: 6px;
+  }
+
+  .shortcuts-tip {
+    font-size: 12px;
+    color: var(--desk-text-tertiary);
+    margin-bottom: 12px;
+  }
+
+  .shortcut-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    max-width: 640px;
+    height: 40px;
+  }
+
+  .shortcut-label {
+    flex: 1;
+    min-width: 0;
+    color: var(--desk-text);
+  }
+
+  .shortcut-actions {
+    margin-top: 12px;
+  }
+
+  /* 运行时数据目录 */
+  .data-dir {
+    margin-top: 28px;
+    padding-top: 20px;
+    border-top: 1px solid var(--desk-border);
+  }
+
+  .data-dir-title {
+    font-size: 14px;
+    color: var(--desk-text-secondary);
+    margin-bottom: 6px;
+  }
+
+  .data-dir-tip {
+    font-size: 12px;
+    color: var(--desk-text-tertiary);
+    margin-bottom: 12px;
+  }
+
+  .data-dir-row {
+    display: flex;
+    gap: 8px;
+    max-width: 640px;
+    margin-bottom: 12px;
+  }
+
+  .data-dir-input {
+    flex: 1;
+  }
+
+  .data-dir-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  /* 命令运行环境（Node / Python 路径） */
+  .runtime {
+    margin-top: 28px;
+    padding-top: 20px;
+    border-top: 1px solid var(--desk-border);
+  }
+
+  .runtime-title {
+    font-size: 14px;
+    color: var(--desk-text-secondary);
+    margin-bottom: 6px;
+  }
+
+  .runtime-tip {
+    font-size: 12px;
+    color: var(--desk-text-tertiary);
+    margin-bottom: 16px;
+  }
+
+  /* 每个运行时一个分组卡片，字段标签左对齐、状态独立展示 */
+  .runtime-group {
+    max-width: 640px;
+    padding: 14px 16px;
+    margin-bottom: 12px;
+    border: 1px solid var(--desk-border);
+    border-radius: var(--desk-radius-sm);
+    background: var(--desk-bg-elevated);
+  }
+
+  .runtime-group-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--desk-text);
+    margin-bottom: 10px;
+  }
+
+  .runtime-field {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 32px;
+  }
+
+  .runtime-field + .runtime-field {
+    margin-top: 10px;
+  }
+
+  .runtime-field-label {
+    flex-shrink: 0;
+    width: 40px;
+    font-size: 13px;
+    color: var(--desk-text-secondary);
+  }
+
+  .runtime-input {
+    flex: 1;
+  }
+
+  /* 检测状态：常态弱化、成功绿色、失败红色 */
+  .runtime-status {
+    flex: 1;
+    min-width: 0;
+    font-size: 12px;
+    color: var(--desk-text-tertiary);
+    word-break: break-all;
+  }
+
+  .runtime-status.ok {
+    color: #389e0d;
+  }
+
+  .runtime-status.error {
+    color: #cf1322;
+  }
+
+  .runtime-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    max-width: 640px;
+    margin-top: 4px;
+  }
+
+  .runtime-dirty {
+    font-size: 12px;
+    color: var(--desk-warning);
+  }
+
+  /* 关于我们 */
+  .about {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    max-width: 640px;
+  }
+
+  .about-brand {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .about-logo {
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+    object-fit: contain;
+    flex-shrink: 0;
+    box-shadow: var(--desk-shadow);
+  }
+
+  .about-name {
+    font-size: 17px;
+    font-weight: 600;
+    line-height: 1.3;
+    text-align: center;
+  }
+
+  .about-list {
+    border: 1px solid var(--desk-border);
+    border-radius: var(--desk-radius-sm);
+    overflow: hidden;
+    background: var(--desk-bg-elevated);
+  }
+
+  .about-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 12px 16px;
+    font-size: 14px;
+  }
+
+  .about-row + .about-row {
+    border-top: 1px solid var(--desk-border);
+  }
+
+  .about-label {
+    color: var(--desk-text-secondary);
+    flex-shrink: 0;
+  }
+
+  .about-value {
+    color: var(--desk-text);
+    font-family: 'SFMono-Regular', ui-monospace, Menlo, Consolas, monospace;
+    font-size: 13px;
+  }
+
+  /* 版本行：版本号与「检查更新」同行展示，保持间距不挤压 */
+  .about-version {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .about-link {
+    color: var(--desk-primary);
+    text-decoration: none;
+    word-break: break-all;
+    text-align: right;
+  }
+
+  .about-link:hover {
+    text-decoration: underline;
+  }
+}

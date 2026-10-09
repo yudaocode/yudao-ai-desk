@@ -1,0 +1,386 @@
+@use './tokens.scss';
+
+/* 全局样式与外壳布局 */
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB',
+    'Microsoft YaHei', sans-serif;
+  color: var(--desk-text);
+  background: var(--desk-bg);
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+  font-size: 15px;
+}
+
+/* --- 外壳布局 --- */
+.desk-shell {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+  background: var(--desk-bg);
+}
+
+.desk-sidebar {
+  width: 292px;
+  flex-shrink: 0;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: var(--desk-sidebar);
+  border-right: 1px solid var(--desk-border);
+  overflow: hidden;
+  transition:
+    width 0.2s ease,
+    border-right-color 0.2s ease;
+}
+
+/* 折叠时侧栏整体隐藏（宽度收为 0），由右侧顶部标题栏的折叠按钮展开 */
+.desk-sidebar.collapsed {
+  width: 0;
+  border-right-color: transparent;
+}
+
+/* 拖拽调整侧栏宽度期间：禁用过渡与文本选中，统一为列宽光标 */
+body.resizing {
+  cursor: col-resize;
+  user-select: none;
+}
+
+body.resizing .desk-sidebar {
+  transition: none;
+}
+
+.desk-main {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background: var(--desk-bg);
+}
+
+/* 侧栏折叠/展开按钮：置于右侧各页面顶部标题栏左侧（全局共用） */
+.sidebar-toggle {
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--desk-text-tertiary);
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  -webkit-app-region: no-drag;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.sidebar-toggle:hover {
+  background: var(--desk-primary-soft);
+  color: var(--desk-text);
+}
+
+/* --- 滚动条 --- */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--desk-border);
+  border-radius: 8px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--desk-text-tertiary);
+}
+
+/* --- Markdown 渲染 --- */
+.markdown-body {
+  font-size: 14px;
+  line-height: 1.75;
+  word-break: break-word;
+}
+
+.markdown-body > :first-child {
+  margin-top: 0;
+}
+
+.markdown-body > :last-child {
+  margin-bottom: 0;
+}
+
+.markdown-body p {
+  margin: 0.5em 0;
+}
+
+.markdown-body h1,
+.markdown-body h2,
+.markdown-body h3,
+.markdown-body h4 {
+  margin: 1em 0 0.5em;
+  line-height: 1.4;
+  font-weight: 700;
+}
+
+.markdown-body ul,
+.markdown-body ol {
+  padding-left: 1.4em;
+  margin: 0.5em 0;
+}
+
+.markdown-body li {
+  margin: 0.25em 0;
+}
+
+.markdown-body a {
+  color: var(--desk-primary);
+  text-decoration: none;
+}
+
+.markdown-body a:hover {
+  text-decoration: underline;
+}
+
+.markdown-body code {
+  font-family: 'JetBrains Mono', 'SFMono-Regular', ui-monospace, 'Cascadia Code', Menlo, Consolas,
+    'Liberation Mono', monospace;
+  font-size: 0.88em;
+  background: var(--desk-code-inline-bg);
+  padding: 0.16em 0.42em;
+  border-radius: 6px;
+}
+
+/* 代码块：主题化底色/边框，等宽字体，横向滚动 */
+.markdown-body pre {
+  background: var(--desk-code-bg);
+  color: var(--desk-code-text);
+  border: 1px solid var(--desk-code-border);
+  padding: 14px 16px;
+  border-radius: var(--desk-radius-sm);
+  overflow-x: auto;
+  margin: 0.8em 0;
+  line-height: 1.65;
+}
+
+.markdown-body pre code {
+  background: transparent;
+  padding: 0;
+  border-radius: 0;
+  color: inherit;
+  font-size: 13px;
+}
+
+.markdown-body blockquote {
+  margin: 0.8em 0;
+  padding: 0.2em 1em;
+  border-left: 3px solid var(--desk-border);
+  color: var(--desk-text-secondary);
+}
+
+.markdown-body table {
+  border-collapse: collapse;
+  margin: 0.8em 0;
+  width: 100%;
+}
+
+.markdown-body th,
+.markdown-body td {
+  border: 1px solid var(--desk-border);
+  padding: 6px 10px;
+  text-align: left;
+}
+
+/* --- 代码高亮（GitHub 主题）：聊天代码块与文件编辑器共用同一套 token 配色 --- */
+.hljs {
+  color: var(--desk-code-text);
+}
+
+.hljs-comment,
+.hljs-quote {
+  color: var(--code-comment);
+}
+
+.hljs-doctag,
+.hljs-keyword,
+.hljs-formula,
+.hljs-template-tag,
+.hljs-template-variable,
+.hljs-type,
+.hljs-variable.language_ {
+  color: var(--code-red);
+}
+
+.hljs-title,
+.hljs-title.class_,
+.hljs-title.class_.inherited__,
+.hljs-title.function_ {
+  color: var(--code-purple);
+}
+
+.hljs-attr,
+.hljs-attribute,
+.hljs-literal,
+.hljs-meta,
+.hljs-number,
+.hljs-operator,
+.hljs-selector-attr,
+.hljs-selector-class,
+.hljs-selector-id,
+.hljs-variable {
+  color: var(--code-blue);
+}
+
+.hljs-meta .hljs-string,
+.hljs-regexp,
+.hljs-string {
+  color: var(--code-string);
+}
+
+.hljs-built_in,
+.hljs-symbol {
+  color: var(--code-orange);
+}
+
+.hljs-name,
+.hljs-selector-pseudo,
+.hljs-selector-tag {
+  color: var(--code-green);
+}
+
+.hljs-code {
+  color: var(--code-comment);
+}
+
+.hljs-subst,
+.hljs-params,
+.hljs-punctuation {
+  color: var(--code-subst);
+}
+
+.hljs-section {
+  color: var(--code-blue);
+  font-weight: 700;
+}
+
+.hljs-bullet {
+  color: var(--code-yellow);
+}
+
+.hljs-emphasis {
+  font-style: italic;
+}
+
+.hljs-strong {
+  font-weight: 700;
+}
+
+.hljs-addition {
+  color: var(--code-green);
+  background: rgba(46, 160, 67, 0.15);
+}
+
+.hljs-deletion {
+  color: var(--code-red);
+  background: rgba(248, 81, 73, 0.15);
+}
+
+/* --- 聊天代码块：GitHub 风格「语言标签 + 复制按钮」头部 --- */
+.markdown-body .code-block {
+  margin: 0.8em 0;
+  border: 1px solid var(--desk-code-border);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--desk-code-bg);
+}
+
+.markdown-body .code-block-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 34px;
+  padding: 0 8px 0 14px;
+  background: var(--desk-bg-elevated);
+  border-bottom: 1px solid var(--desk-code-border);
+}
+
+.markdown-body .code-lang {
+  font-family: 'SFMono-Regular', ui-monospace, Menlo, Consolas, monospace;
+  font-size: 12px;
+  color: var(--desk-text-tertiary);
+  text-transform: lowercase;
+}
+
+.markdown-body .code-copy {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 24px;
+  padding: 0 8px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--desk-text-secondary);
+  font-size: 12px;
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.markdown-body .code-copy:hover {
+  background: var(--desk-primary-soft);
+  color: var(--desk-text);
+}
+
+.markdown-body .code-copy.copied {
+  color: #2da44e;
+}
+
+.markdown-body .code-block pre {
+  margin: 0;
+  padding: 12px 16px;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+}
+
+.markdown-body .code-block pre code {
+  font-size: 12.5px;
+  line-height: 1.65;
+}
+
+/* --- 通用工具类 --- */
+.text-secondary {
+  color: var(--desk-text-secondary);
+}
+
+.flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+
+/* UI 组件沿用桌面布局与主题，不增加通用适配层。 */
+.ui-icon { display: inline-flex; align-items: center; justify-content: center; width: 1em; height: 1em; vertical-align: middle; }
+.desk-scroll { overflow: auto; min-height: 0; }
+.ant-input, .ant-input-affix-wrapper, .ant-select-selector, .ant-modal-content { background: var(--desk-bg-elevated); color: var(--desk-text); }
+.ant-btn-primary { background: var(--desk-btn-bg); border-color: var(--desk-btn-bg); color: var(--desk-btn-text); }
+.ant-btn-primary:hover { background: var(--desk-btn-bg-hover) !important; color: var(--desk-btn-text) !important; }

@@ -1,0 +1,37 @@
+/* components/ShortcutInput.vue */
+@scope (.shortcut-input) {
+  :scope.shortcut-input {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 120px;
+    height: 32px;
+    padding: 0 12px;
+    border: 1px solid var(--desk-border);
+    border-radius: var(--desk-radius-sm);
+    background: var(--desk-bg-elevated);
+    font-size: 13px;
+    color: var(--desk-text);
+    cursor: pointer;
+    user-select: none;
+    outline: none;
+    transition: border-color 0.15s ease;
+  }
+
+  :scope.shortcut-input:hover {
+    border-color: var(--desk-primary);
+  }
+
+  :scope.shortcut-input.recording {
+    border-color: var(--desk-primary);
+    box-shadow: 0 0 0 2px var(--desk-primary-soft);
+  }
+
+  .shortcut-value {
+    font-family: 'SFMono-Regular', ui-monospace, Menlo, Consolas, monospace;
+  }
+
+  .shortcut-placeholder {
+    color: var(--desk-text-tertiary);
+  }
+}

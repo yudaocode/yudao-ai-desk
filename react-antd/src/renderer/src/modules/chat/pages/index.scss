@@ -1,0 +1,303 @@
+/* modules/chat/pages/index.vue */
+@scope (.chat-page) {
+  :scope.chat-page {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-width: 0;
+  }
+
+  .chat-header {
+    height: var(--desk-header-height);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 32px;
+    border-bottom: 1px solid var(--desk-border);
+    gap: 16px;
+    /* 顶栏可拖拽移动窗口（模型选择器除外） */
+    -webkit-app-region: drag;
+  }
+
+  /* 侧栏折叠后标题栏顶到窗口最左侧：macOS 下为红黄绿按钮预留宽度，避免与折叠按钮重叠 */
+  .chat-header.mac-collapsed {
+    padding-left: 80px;
+  }
+
+  .chat-header-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+  }
+
+  /* 右上角开关组：终端 / 右侧侧栏显隐 */
+  .chat-header-right {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+    -webkit-app-region: no-drag;
+  }
+
+  /* 开关激活态：高亮当前已展开的面板 */
+  .sidebar-toggle.active {
+    background: var(--desk-primary-soft);
+    color: var(--desk-text);
+  }
+
+  /* 顶栏面板图标：随文字色着色（悬浮/激活态生效） */
+  .panel-icon {
+    width: 16px;
+    height: 16px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.7;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  /* 标题 + 操作：仅悬浮标题文案区域时显示「...」 */
+  .chat-title-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    /* 顶栏为窗口拖拽区，此处排除拖拽，保证 :hover 正常触发与图标可点击 */
+    -webkit-app-region: no-drag;
+  }
+
+  .chat-title {
+    font-size: 14px;
+    font-weight: 600;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* 会话操作用「...」：默认隐藏，悬浮标题文案时展示（顶栏为拖拽区，需排除以保证可点击） */
+  .chat-title-more {
+    flex-shrink: 0;
+    font-size: 16px;
+    color: var(--desk-text-tertiary);
+    cursor: pointer;
+    outline: none;
+    visibility: hidden;
+    transition: color 0.15s ease;
+    -webkit-app-region: no-drag;
+  }
+
+  .chat-title-wrap:hover .chat-title-more {
+    visibility: visible;
+  }
+
+  .chat-title-more:hover {
+    color: var(--desk-text);
+  }
+
+  /* 工作区：左对话内容（自适应）+ 右侧侧栏 */
+  .chat-workspace {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+  }
+
+  .chat-content {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* 空态：标题/项目选择、输入框与示例作为一组整体垂直居中（整体略上移） */
+  .chat-content.empty {
+    justify-content: center;
+    padding-bottom: 10vh;
+  }
+
+  .chat-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px 32px;
+  }
+
+  /* 空态体：仅占内容高度，便于与输入框整体居中 */
+  .chat-body.empty {
+    flex: 0 0 auto;
+    display: flex;
+    padding: 0;
+  }
+
+  /* 回到底部按钮：悬浮于输入框上方右侧，用户上翻时出现 */
+  .scroll-to-bottom {
+    position: absolute;
+    right: 32px;
+    bottom: 112px;
+    z-index: 10;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--desk-border);
+    border-radius: 50%;
+    background: var(--desk-bg-elevated);
+    color: var(--desk-text-secondary);
+    cursor: pointer;
+    box-shadow: var(--desk-shadow);
+    transition:
+      color 0.15s ease,
+      border-color 0.15s ease;
+  }
+
+  .scroll-to-bottom:hover {
+    color: var(--desk-text);
+    border-color: var(--desk-text-tertiary);
+  }
+
+  .chat-inner {
+    max-width: 880px;
+    margin: 0 auto;
+  }
+
+  /* 空态项目选择：紧贴输入框下沿，宽度比输入框略窄、居中 */
+  .empty-project {
+    flex-shrink: 0;
+    /* 抵消输入框容器底部 22px 内边距，使背景框紧贴输入框 */
+    margin-top: -22px;
+    padding: 0 32px 10px;
+  }
+
+  /* 背景框：比输入框（880px）略窄、居中；浅灰底、圆角，内容靠左 */
+  .empty-project-inner {
+    max-width: 840px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    min-height: 34px;
+    padding: 0 10px;
+    background: var(--desk-segment-bg);
+    border-radius: 0 0 12px 12px;
+  }
+
+  /* 项目选择：可点击下拉触发器，固定宽度不随项目名长短变化 */
+  .project-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    width: 150px;
+    box-sizing: border-box;
+    padding: 6px 10px;
+    border-radius: 8px;
+    color: var(--desk-text-secondary);
+    font-size: 14px;
+    cursor: pointer;
+    outline: none;
+    transition:
+      color 0.15s ease,
+      background 0.15s ease;
+  }
+
+  .project-trigger:hover {
+    background: var(--desk-primary-soft);
+    color: var(--desk-text);
+  }
+
+  .project-trigger .project-icon,
+  .project-trigger .project-arrow {
+    flex-shrink: 0;
+    font-size: 14px;
+  }
+
+  .project-trigger .project-name {
+    flex: 1;
+    min-width: 0;
+    text-align: left;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* 空态示例：与输入框同宽居中，纯文字入口（无背景框） */
+  .empty-examples {
+    flex-shrink: 0;
+    width: 100%;
+    max-width: 880px;
+    box-sizing: border-box;
+    margin: 0 auto;
+    padding: 0 32px 24px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    color: var(--desk-text-tertiary);
+  }
+
+  .examples-label {
+    color: var(--desk-text-tertiary);
+  }
+
+  .examples-sep {
+    color: var(--desk-text-tertiary);
+    margin: 0 2px;
+  }
+
+  .example-link {
+    color: var(--desk-text-secondary);
+    cursor: pointer;
+    transition: color 0.15s ease;
+  }
+
+  .example-link:hover {
+    color: var(--desk-primary);
+    text-decoration: underline;
+  }
+
+  /* 右侧侧栏（侧边任务）：可拖拽宽度；放大态占满正文区 */
+  .chat-side-panel {
+    position: relative;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    border-left: 1px solid var(--desk-border);
+    background: var(--desk-sidebar);
+  }
+
+  .chat-side-panel.maximized {
+    flex: 1;
+    min-width: 0;
+  }
+
+  /* 左边缘拖拽手柄：与左侧会话栏保持同宽（5px），视觉条细；下方 ::after 提供更宽命中区 */
+  .side-panel-resizer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 10;
+    width: 5px;
+    height: 100%;
+    cursor: col-resize;
+    -webkit-app-region: no-drag;
+  }
+
+  /* 透明命中区：视觉条保持 5px，实际可抓取范围更宽（近分割线即可拖动） */
+  .side-panel-resizer::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -2px;
+    width: 16px;
+    height: 100%;
+  }
+
+  .side-panel-resizer:hover,
+  body.resizing .side-panel-resizer {
+    background: var(--desk-primary-soft);
+  }
+}

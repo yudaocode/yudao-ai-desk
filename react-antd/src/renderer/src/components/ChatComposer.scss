@@ -1,0 +1,105 @@
+/* components/ChatComposer.vue */
+@scope (.composer) {
+  :scope.composer {
+    padding: 12px 32px 22px;
+  }
+
+  .composer-box {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 10px 10px 10px 16px;
+    background: var(--desk-bg-elevated);
+    border: 1px solid var(--desk-border);
+    border-radius: var(--desk-radius);
+    box-shadow: var(--desk-shadow);
+  }
+
+  .composer-box:focus-within {
+    border-color: var(--desk-primary);
+  }
+
+  .composer-box .ant-input {
+    border: 0;
+    outline: none;
+    background: transparent;
+    box-shadow: none;
+    padding: 8px 0;
+    font-size: 14px;
+    color: var(--desk-text);
+  }
+
+  /* 底部操作行：左下选择项目/模型，右下发送/停止 */
+  .composer-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .composer-left {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  /* 无边框选择器触发器：图标 + 文本 + 向下角标 */
+  .picker-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    max-width: 220px;
+    padding: 4px 8px;
+    border-radius: 8px;
+    cursor: pointer;
+    color: var(--desk-text-secondary);
+    font-size: 13px;
+    outline: none;
+    transition:
+      color 0.15s ease,
+      background 0.15s ease;
+  }
+
+  .picker-trigger:hover {
+    color: var(--desk-text);
+    background: var(--desk-primary-soft);
+  }
+
+  .picker-trigger .picker-icon,
+  .picker-trigger .picker-arrow {
+    flex-shrink: 0;
+    font-size: 13px;
+  }
+
+  .picker-trigger .picker-name {
+    max-width: 160px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .ant-dropdown-trigger {
+    outline: none;
+  }
+
+  /* 模式下拉：当前项高亮；下拉项图标与文案留白 */
+  .ant-dropdown-menu-item.mode-active {
+    color: var(--desk-primary);
+    font-weight: 600;
+  }
+
+  .ant-dropdown-menu-item.mode-active .ui-icon {
+    color: var(--desk-primary);
+  }
+
+  .ant-dropdown-menu-item .ui-icon {
+    margin-right: 6px;
+  }
+
+  .composer-actions {
+    flex-shrink: 0;
+  }
+}

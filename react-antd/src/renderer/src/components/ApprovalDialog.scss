@@ -1,0 +1,67 @@
+/* components/ApprovalDialog.vue */
+@scope (.approval-dialog) {
+  /* 越界审批对话框：与黑白灰主题一致，左侧警示图标 + 路径信息 */
+  .approval-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .approval-icon {
+    font-size: 18px;
+    color: var(--desk-warning);
+  }
+
+  .approval-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--desk-text);
+  }
+
+  .approval-body {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .approval-message {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--desk-text);
+  }
+
+  /* 路径信息块：浅底圆角，等宽字体便于辨认 */
+  .approval-field {
+    display: flex;
+    gap: 8px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    background: var(--desk-bg-elevated);
+    font-size: 12.5px;
+    line-height: 1.5;
+  }
+
+  .approval-label {
+    flex-shrink: 0;
+    color: var(--desk-text-tertiary);
+  }
+
+  .approval-value {
+    min-width: 0;
+    color: var(--desk-text-secondary);
+    word-break: break-all;
+  }
+
+  .approval-question {
+    margin: 2px 0 0;
+    font-size: 13px;
+    color: var(--desk-text-secondary);
+  }
+
+  .approval-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+}

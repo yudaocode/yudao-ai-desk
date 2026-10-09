@@ -1,0 +1,28 @@
+/* App.vue */
+@scope (.update-dialog) {
+  .update-version {
+    font-size: 15px;
+    font-weight: 600;
+  }
+
+  .update-current {
+    margin-top: 4px;
+    font-size: 13px;
+    color: var(--desk-text-tertiary);
+  }
+
+  .update-notes {
+    margin: 12px 0 0;
+    padding: 10px 12px;
+    max-height: 260px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+    font-family: inherit;
+    font-size: 13px;
+    color: var(--desk-text-secondary);
+    background: var(--desk-bg-elevated);
+    border: 1px solid var(--desk-border);
+    border-radius: var(--desk-radius-sm);
+  }
+}

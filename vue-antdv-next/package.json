@@ -1,0 +1,63 @@
+{
+  "name": "yudao-ai-desk-vue",
+  "version": "1.1.1",
+  "private": true,
+  "description": "Yudao AI Desk | AI Agent 桌面客户端",
+  "homepage": "https://gitee.com/yudaocode/yudao-ai-desk",
+  "main": "./out/main/index.js",
+  "config": {
+    "electron_mirror": "https://npmmirror.com/mirrors/electron/",
+    "electron_builder_binaries_mirror": "https://npmmirror.com/mirrors/electron-builder-binaries/"
+  },
+  "scripts": {
+    "dev": "electron-vite dev",
+    "start": "electron-vite preview",
+    "build": "npm run type-check && electron-vite build",
+    "type-check": "npm run type-check:node && npm run type-check:web",
+    "type-check:node": "tsc --noEmit -p tsconfig.node.json --composite false",
+    "type-check:web": "vue-tsc --noEmit -p tsconfig.web.json --composite false",
+    "pack": "npm run build && electron-builder --dir",
+    "build:mac": "npm run build && electron-builder --mac",
+    "build:win": "npm run build && electron-builder --win --x64 --config.npmRebuild=false",
+    "postinstall": "install-electron && electron-builder install-app-deps && node scripts/fix-node-pty-perms.cjs",
+    "test": "vitest run",
+    "test:electron": "playwright test",
+    "test:package": "node tests/package-smoke.cjs"
+  },
+  "dependencies": {
+    "@earendil-works/pi-agent-core": "1.1.0",
+    "@earendil-works/pi-ai": "1.1.0",
+    "better-sqlite3": "13.0.3",
+    "drizzle-orm": "0.45.3",
+    "electron-log": "5.4.4",
+    "node-pty": "1.1.0"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "9.6.0",
+    "@types/node": "26.6.4",
+    "@vitejs/plugin-vue": "6.0.9",
+    "@xterm/addon-fit": "0.11.0",
+    "@xterm/xterm": "6.0.0",
+    "dompurify": "3.4.16",
+    "electron": "44.7.0",
+    "electron-builder": "26.15.3",
+    "electron-vite": "5.0.0",
+    "highlight.js": "^11.12.0",
+    "markdown-it": "15.0.2",
+    "pinia": "4.0.3",
+    "sass-embedded": "1.105.1",
+    "typescript": "6.0.3",
+    "vite": "7.3.7",
+    "vue": "3.5.43",
+    "vue-i18n": "11.4.13",
+    "vue-router": "5.4.0",
+    "vue-tsc": "3.3.12",
+    "@playwright/test": "^1.59.0",
+    "vitest": "^4.1.0",
+    "antdv-next": "1.6.0",
+    "@antdv-next/icons": "1.1.2"
+  },
+  "engines": {
+    "node": ">=22.12.0"
+  }
+}

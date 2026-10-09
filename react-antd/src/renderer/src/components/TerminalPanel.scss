@@ -1,0 +1,108 @@
+/* components/TerminalPanel.vue */
+@scope (.chat-terminal) {
+  /* 底部终端面板：横跨主区底部 */
+  :scope.chat-terminal {
+    height: 240px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    border-top: 1px solid var(--desk-border);
+    background: var(--desk-bg);
+  }
+
+  .terminal-header {
+    height: 40px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 0 10px 0 14px;
+    border-bottom: 1px solid var(--desk-border);
+  }
+
+  .terminal-tabs {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    overflow-x: auto;
+  }
+
+  /* 标签：终端图标 + 名称 + 关闭 */
+  .terminal-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+    padding: 4px 6px 4px 10px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    font-size: 13px;
+    color: var(--desk-text-secondary);
+    cursor: pointer;
+    transition:
+      background 0.15s ease,
+      color 0.15s ease;
+  }
+
+  .terminal-tab:hover {
+    background: var(--desk-primary-soft);
+  }
+
+  .terminal-tab.active {
+    background: var(--desk-primary-soft);
+    color: var(--desk-text);
+  }
+
+  .terminal-tab-name {
+    max-width: 160px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* 终端图标：随文字色着色 */
+  .panel-icon {
+    width: 15px;
+    height: 15px;
+    flex-shrink: 0;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.7;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  /* 关闭图标：默认隐藏，悬浮标签时展示 */
+  .terminal-tab-close {
+    font-size: 13px;
+    visibility: hidden;
+  }
+
+  .terminal-tab:hover .terminal-tab-close {
+    visibility: visible;
+  }
+
+  .terminal-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+
+  /* 终端画布容器：绝对铺满，交由 xterm 绘制 */
+  .terminal-body {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    background: var(--desk-bg);
+  }
+
+  .terminal-xterm {
+    position: absolute;
+    inset: 6px 8px;
+  }
+}
