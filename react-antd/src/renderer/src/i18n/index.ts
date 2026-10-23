@@ -1,6 +1,6 @@
 /* 国际化：沿用上游 zh/en 词条与 t()，语言由设置驱动 */
-import zh from './locales/zh.json'
-import en from './locales/en.json'
+import zh from '@renderer/i18n/locales/zh.json'
+import en from '@renderer/i18n/locales/en.json'
 
 let language: 'zh' | 'en' = 'zh'
 

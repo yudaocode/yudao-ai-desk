@@ -1,0 +1,55 @@
+/* components/ActivityRail.vue */
+@scope (.sidebar-rail) {
+  /* 常驻图标栏：固定宽度，与顶部栏同色（最深） */
+  :scope.sidebar-rail {
+    flex-shrink: 0;
+    width: var(--desk-rail-width);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0 8px;
+    background: var(--desk-chrome-bg);
+  }
+
+  .rail-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .rail-btn {
+    width: 38px;
+    height: 38px;
+    padding: 0;
+    border: none;
+    border-radius: 10px;
+    background: transparent;
+    color: var(--desk-text-secondary);
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    -webkit-app-region: no-drag;
+    transition:
+      background 0.15s ease,
+      color 0.15s ease;
+  }
+
+  .rail-btn:hover {
+    background: var(--desk-primary-soft);
+    color: var(--desk-text);
+  }
+
+  .rail-btn.active {
+    background: var(--desk-primary-soft);
+    color: var(--desk-text);
+  }
+
+  .rail-icon {
+    width: 18px;
+    height: 18px;
+  }
+}

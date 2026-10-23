@@ -1,0 +1,17 @@
+/* components/NavControls.vue */
+@scope (.nav-controls) {
+  /* 导航控件组：与标题同排，固定于顶栏左侧 */
+  :scope.nav-controls {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    -webkit-app-region: no-drag;
+  }
+
+  /* 侧栏折叠图标尺寸（着色/描边由 .desk-svg-icon 统一提供） */
+  .panel-toggle-icon {
+    width: 17px;
+    height: 17px;
+  }
+}

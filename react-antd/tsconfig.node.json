@@ -14,7 +14,8 @@
     "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
     "paths": {
-      "@main/*": ["./src/main/*"]          /* 主进程路径别名，与 electron.vite.config.ts 一致 */
+      "@main/*": ["./src/main/*"],         /* 主进程路径别名，与 electron.vite.config.ts 一致 */
+      "@shared/*": ["./src/shared/*"]      /* 跨进程共享契约别名 */
     }
   },
   "include": [

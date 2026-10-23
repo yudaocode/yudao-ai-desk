@@ -2,7 +2,7 @@
 
 import MarkdownIt from 'markdown-it'
 import DOMPurify from 'dompurify'
-import { t } from '../i18n'
+import { t } from '@renderer/i18n'
 import { escapeHtml, highlightCode } from './useHighlight'
 
 const md = new MarkdownIt({

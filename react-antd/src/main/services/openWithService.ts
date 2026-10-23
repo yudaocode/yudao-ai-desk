@@ -7,7 +7,7 @@
 import { execFile } from 'child_process'
 import { existsSync } from 'fs'
 import { shell } from 'electron'
-import type { OpenWithApp } from '../../shared/ipc'
+import type { OpenWithApp } from '@shared/ipc'
 
 /* macOS 常见可打开文本/代码的应用（按存在性过滤） */
 const MAC_APPS: OpenWithApp[] = [

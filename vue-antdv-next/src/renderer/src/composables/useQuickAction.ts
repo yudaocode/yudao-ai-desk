@@ -1,9 +1,9 @@
 /* 快捷操作执行器：命令面板「快捷操作」与全局快捷键共用 */
 
 import { useRouter } from 'vue-router'
-import { useChatStore } from '../stores/chat'
-import { useLayoutStore } from '../stores/layout'
-import type { QuickAction } from '../../../shared/ipc'
+import { useChatStore } from '@renderer/stores/chat'
+import { useLayoutStore } from '@renderer/stores/layout'
+import type { QuickAction } from '@shared/ipc'
 
 export function useQuickAction(): (action: QuickAction) => void {
   const router = useRouter()

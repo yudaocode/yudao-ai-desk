@@ -31,11 +31,17 @@
     "copy": "复制",
     "copied": "已复制"
   },
+  "layout": {
+    "home": "首页",
+    "back": "后退",
+    "forward": "前进",
+    "collapseSidebar": "收起侧栏",
+    "expandSidebar": "展开侧栏",
+    "resetPanelWidth": "双击恢复默认宽度"
+  },
   "chat": {
     "newChat": "新对话",
     "newChatAction": "新建对话",
-    "collapseSidebar": "收起侧栏",
-    "expandSidebar": "展开侧栏",
     "sessions": "会话",
     "recentSessions": "最近会话",
     "searchSession": "搜索会话",
@@ -170,7 +176,7 @@
     "duplicate": "该目录已创建项目"
   },
   "settings": {
-    "title": "设置",
+    "title": "系统设置",
     "back": "返回对话",
     "general": "常规",
     "personalization": "个性化",
@@ -250,5 +256,11 @@
     "autoCheckUpdate": "启动时自动检查更新",
     "github": "Gitee 仓库",
     "docs": "官方文档"
+  },
+  "plugin": {
+    "title": "插件",
+    "mcp": "MCP插件",
+    "skill": "SKILL技能",
+    "wip": "功能建设中，敬请期待！"
   }
 }

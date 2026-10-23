@@ -5,9 +5,9 @@
 
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
-import { api } from '../api'
-import { t } from '../i18n'
-import type { ProjectDTO } from '../../../shared/ipc'
+import { api } from '@renderer/api'
+import { t } from '@renderer/i18n'
+import type { ProjectDTO } from '@shared/ipc'
 
 export const useProjectStore = defineStore('project', () => {
   /* 项目列表（最近更新优先） */

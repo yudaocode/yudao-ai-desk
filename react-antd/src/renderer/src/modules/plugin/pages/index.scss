@@ -1,0 +1,26 @@
+/* modules/plugin/pages/index.vue */
+@scope (.plugin-page) {
+  :scope.plugin-page {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--desk-bg);
+  }
+
+  .plugin-placeholder {
+    text-align: center;
+  }
+
+  .plugin-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--desk-text);
+  }
+
+  .plugin-wip {
+    margin-top: 8px;
+    font-size: 14px;
+    color: var(--desk-text-tertiary);
+  }
+}

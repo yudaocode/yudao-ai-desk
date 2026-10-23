@@ -3,9 +3,9 @@ import './ApprovalDialog.scss'
 import { useEffect, useRef, useState } from 'react'
 import { Button, Modal } from 'antd'
 import { WarningFilled } from '@ant-design/icons'
-import { t } from '../i18n'
-import { api } from '../api'
-import type { ChatApprovalChoice, ChatApprovalPrompt } from '../../../shared/ipc'
+import { t } from '@renderer/i18n'
+import { api } from '@renderer/api'
+import type { ChatApprovalChoice, ChatApprovalPrompt } from '@shared/ipc'
 export default function ApprovalDialog() {
   const [prompt, setPrompt] = useState<ChatApprovalPrompt | null>(null)
   const current = useRef<ChatApprovalPrompt | null>(null)

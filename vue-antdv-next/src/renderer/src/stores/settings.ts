@@ -3,8 +3,8 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import { message as ElMessage } from 'antdv-next'
-import { api } from '../api'
-import { setLanguage, t } from '../i18n'
+import { api } from '@renderer/api'
+import { setLanguage, t } from '@renderer/i18n'
 import type {
   AppSettings,
   ProviderDTO,
@@ -12,7 +12,7 @@ import type {
   RuntimeDetectResult,
   RuntimeExecInput,
   UpdateInfo
-} from '../../../shared/ipc'
+} from '@shared/ipc'
 
 export const useSettingsStore = defineStore('settings', () => {
   /* 应用设置（主题/语言/默认供应商与模型/系统提示词/快捷操作等） */
@@ -47,6 +47,9 @@ export const useSettingsStore = defineStore('settings', () => {
   /* 客户端更新：检测结果（hasUpdate 时用于弹提示）与检查中状态 */
   const updateInfo = ref<UpdateInfo | null>(null)
   const updateChecking = ref(false)
+
+  /* 系统设置子菜单当前分类（UI 选中态，供左侧子菜单与设置页共享） */
+  const activeTab = ref('general')
 
   /* 已启用的供应商 */
   const enabledProviders = computed(() => providers.value.filter((item) => item.enabled))
@@ -217,6 +220,7 @@ export const useSettingsStore = defineStore('settings', () => {
     detectExecutable,
     updateInfo,
     updateChecking,
+    activeTab,
     checkUpdate,
     openUpdate,
     dismissUpdate,

@@ -7,96 +7,6 @@
     min-width: 0;
   }
 
-  .chat-header {
-    height: var(--desk-header-height);
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 32px;
-    border-bottom: 1px solid var(--desk-border);
-    gap: 16px;
-    /* 顶栏可拖拽移动窗口（模型选择器除外） */
-    -webkit-app-region: drag;
-  }
-
-  /* 侧栏折叠后标题栏顶到窗口最左侧：macOS 下为红黄绿按钮预留宽度，避免与折叠按钮重叠 */
-  .chat-header.mac-collapsed {
-    padding-left: 80px;
-  }
-
-  .chat-header-left {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    min-width: 0;
-  }
-
-  /* 右上角开关组：终端 / 右侧侧栏显隐 */
-  .chat-header-right {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    flex-shrink: 0;
-    -webkit-app-region: no-drag;
-  }
-
-  /* 开关激活态：高亮当前已展开的面板 */
-  .sidebar-toggle.active {
-    background: var(--desk-primary-soft);
-    color: var(--desk-text);
-  }
-
-  /* 顶栏面板图标：随文字色着色（悬浮/激活态生效） */
-  .panel-icon {
-    width: 16px;
-    height: 16px;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 1.7;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-  }
-
-  /* 标题 + 操作：仅悬浮标题文案区域时显示「...」 */
-  .chat-title-wrap {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    min-width: 0;
-    /* 顶栏为窗口拖拽区，此处排除拖拽，保证 :hover 正常触发与图标可点击 */
-    -webkit-app-region: no-drag;
-  }
-
-  .chat-title {
-    font-size: 14px;
-    font-weight: 600;
-    min-width: 0;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  /* 会话操作用「...」：默认隐藏，悬浮标题文案时展示（顶栏为拖拽区，需排除以保证可点击） */
-  .chat-title-more {
-    flex-shrink: 0;
-    font-size: 16px;
-    color: var(--desk-text-tertiary);
-    cursor: pointer;
-    outline: none;
-    visibility: hidden;
-    transition: color 0.15s ease;
-    -webkit-app-region: no-drag;
-  }
-
-  .chat-title-wrap:hover .chat-title-more {
-    visibility: visible;
-  }
-
-  .chat-title-more:hover {
-    color: var(--desk-text);
-  }
-
   /* 工作区：左对话内容（自适应）+ 右侧侧栏 */
   .chat-workspace {
     flex: 1;
@@ -296,8 +206,12 @@
     height: 100%;
   }
 
-  .side-panel-resizer:hover,
-  body.resizing .side-panel-resizer {
+  .side-panel-resizer:hover {
     background: var(--desk-primary-soft);
   }
+}
+
+/* 拖拽期间保持手柄高亮（body 位于作用域根之外，不放入 @scope） */
+body.resizing .chat-page .side-panel-resizer {
+  background: var(--desk-primary-soft);
 }

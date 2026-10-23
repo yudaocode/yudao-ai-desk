@@ -1,0 +1,14 @@
+/* modules/chat/components/ChatTopbarActions.vue */
+@scope (.desk-topbar-actions) {
+  /* 面板开关激活态：高亮当前已展开的面板 */
+  .sidebar-toggle.active {
+    background: var(--desk-primary-soft);
+    color: var(--desk-text);
+  }
+
+  /* 面板图标尺寸 */
+  .panel-icon {
+    width: 16px;
+    height: 16px;
+  }
+}

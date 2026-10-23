@@ -154,6 +154,7 @@ async function newSession(title: string, mode: 'plan' | 'build' = 'build'): Prom
     mode
   })
   await page.reload()
+  await page.locator('.rail-btn[title="首页"]').click()
   await expect(page.locator('.session-item').filter({ hasText: title })).toBeVisible()
   await page.locator('.session-item').filter({ hasText: title }).click()
   return id
@@ -339,12 +340,12 @@ test('样式根布局、搜索面板与历史回复操作可用', async () => {
   await expect(page.locator('.empty-logo')).toHaveAttribute('src', /icon/)
   await expect(page.locator('.empty-logo')).toHaveJSProperty('naturalWidth', 1024)
   await page.waitForTimeout(450); await page.screenshot({ path: 'test-results/style-home.png' })
-  await page.locator('.foot-btn').click()
+  await page.locator('.rail-btn[title="系统设置"]').click()
   await expect(page.locator('.settings-page')).toBeVisible()
   await page.waitForTimeout(450); await page.screenshot({ path: 'test-results/style-settings.png' })
   for (const [name, file] of [['个性化', 'personalization'], ['模型供应商', 'providers'], ['关于我们', 'about']] as const) {
-    await page.getByRole('tab', { name, exact: true }).click()
-    await expect(page.getByRole('tab', { name, exact: true })).toHaveAttribute('aria-selected', 'true')
+    await page.locator('.sidebar-panel .menu-item').filter({ hasText: new RegExp(`^${name}$`) }).click()
+    await expect(page.locator('.sidebar-panel .menu-item').filter({ hasText: new RegExp(`^${name}$`) })).toHaveClass(/active/)
     await page.waitForTimeout(450); await page.screenshot({ path: `test-results/style-settings-${file}.png` })
     if (file === 'personalization') {
       for (const wrapper of [page.locator('.settings-form .ant-input-affix-wrapper').nth(0), page.locator('.settings-form .ant-input-affix-wrapper').nth(1)]) {
@@ -359,7 +360,7 @@ test('样式根布局、搜索面板与历史回复操作可用', async () => {
 
   }
   await expect(page.locator('.about-link').first()).toHaveAttribute('href', 'https://gitee.com/yudaocode/yudao-ai-desk')
-  await page.getByRole('tab', { name: '模型供应商', exact: true }).click()
+  await page.locator('.sidebar-panel .menu-item').filter({ hasText: /^模型供应商$/ }).click()
   await page.getByRole('button', { name: '添加供应商' }).click()
   await expect(page.getByRole('dialog')).toBeVisible()
   await expect(page.getByRole('dialog')).toContainText('添加供应商')
@@ -376,11 +377,12 @@ test('样式根布局、搜索面板与历史回复操作可用', async () => {
   await page.evaluate(async () => { await window.desk.settings.save({ theme: 'dark' }) })
   await page.reload()
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark')
-  await page.locator('.foot-btn').click()
-  await page.getByRole('tab', { name: '模型供应商', exact: true }).click()
+  await page.locator('.rail-btn[title="系统设置"]').click()
+  await page.locator('.sidebar-panel .menu-item').filter({ hasText: /^模型供应商$/ }).click()
   await expect(page.locator('.provider-toolbar')).toBeVisible()
-  await expect(page.getByRole('tab', { name: '模型供应商', exact: true })).toHaveAttribute('aria-selected', 'true')
+  await expect(page.locator('.sidebar-panel .menu-item').filter({ hasText: /^模型供应商$/ })).toHaveClass(/active/)
   await page.waitForTimeout(450); await page.screenshot({ path: 'test-results/style-providers-dark-1080.png' })
+  await page.locator('.rail-btn[title="首页"]').click()
   await page.locator('.new-btn').click()
   await expect(page.locator('.chat-page')).toBeVisible()
   await page.waitForTimeout(450); await page.screenshot({ path: 'test-results/style-home-dark-1080.png' })
@@ -388,8 +390,9 @@ test('样式根布局、搜索面板与历史回复操作可用', async () => {
   await page.reload()
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'light')
   await application.evaluate(({ BrowserWindow }) => { BrowserWindow.getAllWindows().find(window => !window.isDestroyed())!.setContentSize(1440, 920) })
-  await page.locator('.foot-btn').click()
-
+  await page.locator('.rail-btn[title="系统设置"]').click()
+  await expect(page.locator('.settings-page')).toBeVisible()
+  await page.locator('.rail-btn[title="首页"]').click()
   await page.locator('.new-btn').click()
   await expect(page.locator('.chat-page')).toBeVisible()
   await expect(page.locator('.chat-page')).toHaveCSS('display', 'flex')
@@ -484,7 +487,7 @@ test('终端创建期间切离页面会释放晚到的PTY', async () => {
     await page.keyboard.press('ControlOrMeta+t')
     await expect(page.locator('.chat-terminal')).toBeVisible()
     expect(await page.locator('.chat-terminal').evaluate(el => el.getBoundingClientRect().height)).toBeGreaterThan(200)
-    await page.locator('.sidebar-foot button').click()
+    await page.locator('.rail-btn[title="系统设置"]').click()
     await expect(page.locator('.settings-page')).toBeVisible()
     await expect.poll(() => application.evaluate(() => {
       const state = (global as any).__terminalRace

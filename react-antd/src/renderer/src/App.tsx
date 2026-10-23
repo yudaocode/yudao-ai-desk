@@ -5,15 +5,16 @@ import { Outlet } from 'react-router-dom'
 import { Button, ConfigProvider, Modal, theme } from 'antd'
 import zhCN from 'antd/locale/zh_CN'
 import enUS from 'antd/locale/en_US'
-import Sidebar from './components/Sidebar'
-import ApprovalDialog from './components/ApprovalDialog'
-import { useSettingsStore } from './stores/settings'
-import { useChatStore } from './stores/chat'
-import { useProjectStore } from './stores/project'
-import { useQuickAction } from './composables/useQuickAction'
-import { matchShortcut } from './utils/shortcut'
+import Sidebar from '@renderer/modules/chat/components/Sidebar'
+import ApprovalDialog from '@renderer/components/ApprovalDialog'
+import AppTopbar from '@renderer/components/AppTopbar'
+import { useSettingsStore } from '@renderer/stores/settings'
+import { useChatStore } from '@renderer/stores/chat'
+import { useProjectStore } from '@renderer/stores/project'
+import { useQuickAction } from '@renderer/composables/useQuickAction'
+import { matchShortcut } from '@renderer/utils/shortcut'
 import { t } from './i18n'
-import type { QuickAction } from '../../shared/ipc'
+import type { QuickAction } from '@shared/ipc'
 export default function App() {
   const settings = useSettingsStore(),
     runQuickAction = useQuickAction()
@@ -83,9 +84,13 @@ export default function App() {
       }}
     >
       <div className="desk-shell">
-        <Sidebar />
-        <div className="desk-main">
-          <Outlet />
+        {/* 全局顶栏：红黄绿（系统）+ 后退/前进 + 折叠按钮；页面标题/操作随路由展示 */}
+        <AppTopbar />
+        <div className="desk-body">
+          <Sidebar />
+          <div className="desk-main">
+            <Outlet />
+          </div>
         </div>
         <ApprovalDialog />
         <Modal

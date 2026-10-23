@@ -31,11 +31,17 @@
     "copy": "Copy",
     "copied": "Copied"
   },
+  "layout": {
+    "home": "Home",
+    "back": "Back",
+    "forward": "Forward",
+    "collapseSidebar": "Collapse sidebar",
+    "expandSidebar": "Expand sidebar",
+    "resetPanelWidth": "Double-click to reset width"
+  },
   "chat": {
     "newChat": "New chat",
     "newChatAction": "New chat",
-    "collapseSidebar": "Collapse sidebar",
-    "expandSidebar": "Expand sidebar",
     "sessions": "Chats",
     "recentSessions": "Recent chats",
     "searchSession": "Search chats",
@@ -250,5 +256,11 @@
     "autoCheckUpdate": "Check for updates on startup",
     "github": "Gitee Repository",
     "docs": "Documentation"
+  },
+  "plugin": {
+    "title": "Plugins",
+    "mcp": "MCP Plugins",
+    "skill": "SKILL Skills",
+    "wip": "Under construction, stay tuned!"
   }
 }

@@ -1,13 +1,14 @@
 /*
- * IPC 网关：注册主进程全部 ipcMain 处理器，做参数透传与必要编排（如 chatSend 的运行时调度与落库）。
- *   - 业务逻辑下沉 services/*；底层运行能力（Agent/终端/文件/系统外壳）由对应模块提供。
+ * IPC 网关：注册主进程全部 ipcMain 处理器，只做参数透传、必要编排（如 dataDir 选择）与错误兜底。
+ *   - 业务编排下沉 services/*（chat 编排在 services/chatService.ts）；底层能力由 agent/* 提供。
+ *   - 本文件不写业务规则，保持薄网关。
  */
 
 import { app, dialog, ipcMain, shell, type BrowserWindow } from 'electron'
-import { IPC } from '../shared/ipc'
+import { IPC } from '@shared/ipc'
 import type {
   AppSettings,
-  ChatMode,
+  ChatApprovalChoice,
   ProviderDTO,
   ProviderModelQuery,
   ProjectCreateInput,
@@ -16,20 +17,14 @@ import type {
   SessionDTO,
   StoredMessage,
   TerminalCreateInput
-} from '../shared/ipc'
+} from '@shared/ipc'
 import { getSettings, saveSettings } from './services/settingsService'
-import {
-  getDataDir,
-  getDbFile,
-  getDefaultDataDir,
-  setDataDir
-} from './services/storageService'
-import { buildRuntimePath, detectExecutable } from './services/runtimeService'
+import { getDataDir, getDbFile, getDefaultDataDir, setDataDir } from './config/paths'
+import { detectExecutable } from './services/envService'
 import { checkForUpdate, openDownload } from './services/updateService'
 import {
   deleteProvider,
   fetchRemoteModels,
-  getProvider,
   listProviders,
   saveProvider
 } from './services/providerService'
@@ -38,10 +33,8 @@ import {
   createSession,
   deleteMessages,
   deleteSession,
-  getSession,
   listMessages,
   listSessions,
-  replaceMessages,
   updateSession
 } from './services/sessionService'
 import {
@@ -62,122 +55,13 @@ import {
 import { listDir, readFile, writeFile } from './services/fsService'
 import { initFsWatch, unwatchDir, watchDir } from './services/fsWatchService'
 import { listOpenWithApps, openWith } from './services/openWithService'
+import { abortChat, respondApproval, sendChat } from './services/chatService'
 import {
-  abortAgent,
   clearSessionPermissions,
   disposeAgentRuntime,
   evictAgent,
-  resetAgents,
-  runAgent
-} from './agent/runtime'
-import { resolveApproval } from './agent/approval'
-import type { ApprovalChoice, HostEvent, ProviderModelConfig, RunAgentInput } from '../shared/agentProtocol'
-
-/* 将 Agent 消息内容归一化为纯文本（用于列表预览与检索） */
-function contentToText(message: unknown): string {
-  const content = (message as { content?: unknown })?.content
-  if (typeof content === 'string') {
-    return content
-  }
-  if (Array.isArray(content)) {
-    return content
-      .map((part) => {
-        if (typeof part === 'string') {
-          return part
-        }
-        return (part as { text?: string })?.text ?? ''
-      })
-      .join('')
-  }
-  return ''
-}
-
-/* 将底层异常翻译为可读提示：明确指向具体供应商与模型 */
-function describeError(raw: string, providerName: string, modelId: string): string {
-  const message = (raw || '').trim()
-  if (/api key/i.test(message)) {
-    return `供应商「${providerName}」未配置 API Key，无法调用模型「${modelId}」，请在「设置」中补全后重试`
-  }
-  const suffix = message ? `：${message}` : ''
-  return `模型「${modelId}」（供应商「${providerName}」）调用失败${suffix}`
-}
-
-/*
- * 解析会话运行时目标：会话已绑定的供应商/模型若已被删除或停用，
- * 返回明确的错误提示要求用户重新选择（不做静默切换，避免用户不知情地换了模型）。
- * 仅当会话未指定模型时才回退到设置默认模型/供应商首个模型。
- */
-function resolveRuntimeTarget(
-  session: SessionDTO,
-  settings: AppSettings
-): { provider: ProviderDTO; model: string } | { error: string } {
-  /* 供应商：会话已指定则必须仍存在且启用；未指定时回退设置默认供应商 */
-  const providerId = session.providerId || settings.providerId
-  const provider = providerId ? getProvider(providerId) : null
-  if (!provider) {
-    return { error: '模型供应商不存在或已被删除，请在会话中重新选择模型' }
-  }
-  if (!provider.enabled) {
-    return { error: `供应商「${provider.name}」已停用，请在会话中重新选择模型` }
-  }
-  /* 模型：会话已指定则必须仍在供应商模型列表内，否则提示更换 */
-  if (session.modelId) {
-    if (!provider.models.includes(session.modelId)) {
-      return { error: `模型「${session.modelId}」不存在或已被删除，请在会话中重新选择模型` }
-    }
-    return { provider, model: session.modelId }
-  }
-  /* 未指定模型：回退设置默认模型，其次供应商首个模型 */
-  const fallback =
-    settings.modelId && provider.models.includes(settings.modelId)
-      ? settings.modelId
-      : (provider.models[0] ?? '')
-  if (!fallback) {
-    return { error: '请为供应商配置至少一个模型' }
-  }
-  return { provider, model: fallback }
-}
-
-/*
- * 失败轮次落库：保留历史消息并追加「用户提问 + 错误提示助手消息」，
- * 使发送失败在重载页面/切换会话后仍可见（避免前端回读消息时把错误提示覆盖丢失）。
- */
-function persistFailureRound(sessionId: string, text: string, tip: string): void {
-  const existing = listMessages(sessionId).map((message) => ({
-    role: message.role,
-    content: message.content,
-    data: message.data
-  }))
-  replaceMessages(sessionId, [
-    ...existing,
-    { role: 'user', content: text, data: JSON.stringify({ role: 'user', content: text }) },
-    {
-      role: 'assistant',
-      content: tip,
-      data: JSON.stringify({ role: 'assistant', stopReason: 'error', errorMessage: tip })
-    }
-  ])
-}
-
-/* 模式说明：拼接到系统指令末尾，引导模型按当前模式行事（Plan 只读规划，Build 读写实施） */
-function modeSystemHint(mode: ChatMode): string {
-  if (mode === 'plan') {
-    return '\n\n当前为 Plan（规划）模式：你处于只读状态，只能读取项目文件进行阅读与分析，不能写入/编辑文件或执行命令。请先给出清晰的方案与计划，待用户切换到 Build 模式后再落地实施。'
-  }
-  return '\n\n当前为 Build（构建）模式：你可以读取、写入、编辑项目文件并执行命令；文件操作限制在当前项目目录内，越界需用户确认。'
-}
-
-/* 供应商 DTO → Pi 运行时配置 */
-function toRuntimeConfig(provider: ProviderDTO): ProviderModelConfig {
-  return {
-    id: provider.id,
-    name: provider.name,
-    baseUrl: provider.baseUrl,
-    apiKey: provider.apiKey,
-    headers: provider.headers,
-    models: provider.models
-  }
-}
+  resetAgents
+} from './agent/host/runtimeHost'
 
 /* 注册全部 IPC 处理器 */
 export function registerIpc(getWindow: () => BrowserWindow | null): void {
@@ -329,125 +213,17 @@ export function registerIpc(getWindow: () => BrowserWindow | null): void {
     deleteMessages(sessionId, ids)
   })
 
-  /* --- 对话 --- */
-  ipcMain.handle(IPC.chatAbort, async (_event, sessionId: string) => {
-    await abortAgent(sessionId)
-  })
-
-  /* 越界审批：渲染进程回传选择，唤醒等待中的 confirmOutside */
-  ipcMain.handle(IPC.chatApprovalRespond, (_event, requestId: string, choice: ApprovalChoice) => {
-    resolveApproval(requestId, choice)
-  })
-
-  ipcMain.handle(IPC.chatSend, async (_event, input: { sessionId: string; text: string }) => {
-    const { sessionId, text } = input
-    const window = getWindow()
-    /* 供应商/模型就绪后，错误提示统一带上「供应商 + 模型」上下文 */
-    let providerName = ''
-    let modelId = ''
-    let contextReady = false
-    /* 本轮是否已完整落库；异常兜底据此避免重复追加失败轮次 */
-    let committed = false
-    const emit = (event: HostEvent): void => {
-      const payload =
-        event.type === 'error' && contextReady
-          ? { ...event, message: describeError(event.message, providerName, modelId) }
-          : event
-      window?.webContents.send(IPC.chatEvent, { sessionId, ...payload })
-    }
-    /* 失败兜底：把「用户提问 + 可读错误提示」落库并下发，避免重载/切换会话后提示丢失 */
-    const fail = (raw: string): void => {
-      const tip = contextReady ? describeError(raw, providerName, modelId) : raw
-      if (!committed) {
-        persistFailureRound(sessionId, text, tip)
-      }
-      emit({ type: 'error', message: tip })
-    }
-
-    try {
-      const session = getSession(sessionId)
-      if (!session) {
-        emit({ type: 'error', message: '会话不存在' })
-        return
-      }
-      /* 首次对话立即以提问作为会话标题并落库：不等到生成结束，避免侧栏长时间停留在「新对话」 */
-      if (session.title === '新对话' || !session.title) {
-        updateSession(sessionId, { title: text.slice(0, 24) })
-      }
-
-      const settings = getSettings()
-      /* 会话引用的供应商/模型若已删除或停用，直接提示用户重新选择，不做静默切换 */
-      const target = resolveRuntimeTarget(session, settings)
-      if ('error' in target) {
-        fail(target.error)
-        return
-      }
-      const { provider, model } = target
-
-      providerName = provider.name
-      modelId = model
-      contextReady = true
-
-      /* 对话模式与文件沙箱边界：默认 Build；根目录取会话所属项目目录（缺失时回退用户主目录） */
-      const mode = session.mode === 'plan' ? 'plan' : 'build'
-      const project = session.projectId ? getProject(session.projectId) : null
-      const rootDir = project?.path || app.getPath('home')
-
-      /* 自定义指令全局生效：统一取当前设置，并附模式说明（个性化变更对旧对话同样生效） */
-      const systemPrompt = `${settings.systemPrompt || ''}${modeSystemHint(mode)}`
-      /* 历史消息不携带 system 提示：系统指令始终取当前设置，保证旧对话也随设置变更生效 */
-      const history = listMessages(sessionId)
-        .map((message) => {
-          try {
-            return JSON.parse(message.data) as { role?: string }
-          } catch {
-            return null
-          }
-        })
-        .filter((item) => item !== null && item.role !== 'system')
-
-      /* 交运行时进程执行：流式事件回传渲染层，结束后回传完整上下文供落库 */
-      const runInput: RunAgentInput = {
-        sessionId,
-        provider: { ...toRuntimeConfig(provider), sessionId },
-        modelId,
-        systemPrompt,
-        messages: history,
-        mode,
-        rootDir,
-        runtimePath: buildRuntimePath(),
-        text
-      }
-      const result = await runAgent(runInput, emit)
-      if (!result.ok) {
-        /* 运行时构建/执行异常（如模型未找到）：错误提示落库并由主进程下发 */
-        fail(result.message)
-        return
-      }
-
-      /* 落库：以运行时完整上下文覆盖会话消息，保证下次续聊一致（剔除 system，避免固化旧指令） */
-      const serialized = result.messages
-        .filter((message) => (message as { role?: string }).role !== 'system')
-        .map((message) => {
-          const role = (message as { role?: string }).role ?? ''
-          const stopReason = (message as { stopReason?: string }).stopReason
-          const errorMessage = (message as { errorMessage?: string }).errorMessage
-          let content = contentToText(message)
-          /* 失败消息追加可读提示落库，避免切换会话后丢失错误信息（保留已生成的部分内容） */
-          if (role === 'assistant' && stopReason === 'error') {
-            const tip = describeError(errorMessage ?? '', providerName, modelId)
-            content = content ? `${content}\n\n${tip}` : tip
-          }
-          return { role, content, data: JSON.stringify(message) }
-        })
-      replaceMessages(sessionId, serialized)
-      committed = true
-    } catch (error) {
-      /* 主进程侧异常（读库/落库等）：清理运行时缓存并落库错误提示 */
-      evictAgent(sessionId)
-      fail((error as Error).message)
-    }
-  })
+  /* --- 对话（编排下沉 chatService，网关仅转发事件） --- */
+  ipcMain.handle(IPC.chatSend, (_event, input: { sessionId: string; text: string }) =>
+    sendChat(input, (payload) => {
+      getWindow()?.webContents.send(IPC.chatEvent, payload)
+    })
+  )
+  ipcMain.handle(IPC.chatAbort, (_event, sessionId: string) => abortChat(sessionId))
+  /* 越界审批：渲染进程回传选择，唤醒等待中的越界确认 */
+  ipcMain.handle(IPC.chatApprovalRespond, (_event, requestId: string, choice: ChatApprovalChoice) =>
+    respondApproval(requestId, choice)
+  )
 
   /* --- 终端（本地 PTY） --- */
   ipcMain.handle(IPC.terminalCreate, (_event, input?: TerminalCreateInput) => createTerminal(input))

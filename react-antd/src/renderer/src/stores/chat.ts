@@ -3,11 +3,11 @@
  */
 
 import { create } from 'zustand'
-import { api } from '../api'
+import { api } from '@renderer/api'
 import { useProjectStore } from './project'
 import { useSettingsStore } from './settings'
-import type { ChatMode, ChatEvent, SessionDTO, StoredMessage } from '../../../shared/ipc'
-import type { MessagePart, ToolCallState, UiMessage } from '../types'
+import type { ChatMode, ChatEvent, SessionDTO, StoredMessage } from '@shared/ipc'
+import type { MessagePart, ToolCallState, UiMessage } from '@renderer/types'
 
 /* 生成 UI 消息 id */
 function uid(): string {

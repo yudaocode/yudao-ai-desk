@@ -3,9 +3,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { mkdtempSync, mkdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { clearSessionPermissions, guardPath, resolveTarget, setApprovalRequester } from '../../src/main/agent/sandbox'
-import { createBuiltinTools } from '../../src/main/agent/tools'
-import { buildModels, normalizeBaseUrl, USER_AGENT } from '../../src/main/agent/models'
+import { clearSessionPermissions, guardPath, resolveTarget, setApprovalRequester } from '../../src/main/agent/worker/sandbox'
+import { createBuiltinTools } from '../../src/main/agent/worker/tools'
+import { buildModels, normalizeBaseUrl, USER_AGENT } from '../../src/main/agent/worker/models'
 let directory: string, root: string, outside: string
 beforeEach(() => { directory = mkdtempSync(join(tmpdir(), 'desk-unit-')); root = join(directory, 'project'); outside = join(directory, 'outside.txt'); mkdirSync(root); writeFileSync(join(root, 'a.txt'), 'alpha\nbeta alpha\n'); writeFileSync(outside, 'private outside'); setApprovalRequester(null); clearSessionPermissions('test'); clearSessionPermissions('other') })
 afterEach(() => { setApprovalRequester(null); clearSessionPermissions('test'); clearSessionPermissions('other'); rmSync(directory, { recursive: true, force: true }) })

@@ -1,19 +1,20 @@
 <script setup lang="ts">
 /* 对话主区：消息流 + 输入框（模式/模型切换在输入框内，项目选择在空态输入框下方靠左） */
-import { h, computed, nextTick, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { message as ElMessage, Modal, Input } from 'antdv-next'
-import MessageItem from '../../../components/MessageItem.vue'
-import ChatComposer from '../../../components/ChatComposer.vue'
-import EmptyState from '../../../components/EmptyState.vue'
-import TerminalPanel from '../../../components/TerminalPanel.vue'
-import RightPanel from '../../../components/panel/RightPanel.vue'
-import { useChatStore } from '../../../stores/chat'
-import { useSettingsStore } from '../../../stores/settings'
-import { useLayoutStore } from '../../../stores/layout'
-import { useProjectStore } from '../../../stores/project'
-import { t } from '../../../i18n'
-import type { ChatMode } from '../../../../../shared/ipc'
+import { message as ElMessage, Modal } from 'antdv-next'
+import MessageItem from '@renderer/modules/chat/components/MessageItem.vue'
+import ChatComposer from '@renderer/modules/chat/components/ChatComposer.vue'
+import EmptyState from '@renderer/components/EmptyState.vue'
+import TerminalPanel from '@renderer/modules/workspace/components/TerminalPanel.vue'
+import RightPanel from '@renderer/modules/workspace/components/RightPanel.vue'
+import { useChatStore } from '@renderer/stores/chat'
+import { useSettingsStore } from '@renderer/stores/settings'
+import { useLayoutStore } from '@renderer/stores/layout'
+import { useProjectStore } from '@renderer/stores/project'
+import { usePanelResize } from '@renderer/composables/usePanelResize'
+import { t } from '@renderer/i18n'
+import type { ChatMode } from '@shared/ipc'
 
 const router = useRouter()
 const chat = useChatStore()
@@ -24,10 +25,9 @@ const project = useProjectStore()
 const scrollRef = ref<HTMLElement | null>(null)
 const composerRef = ref()
 
-/* 是否有消息、是否具备对话条件（存在启用的供应商）、当前会话标题 */
+/* 是否有消息、是否具备对话条件（存在启用的供应商） */
 const hasMessages = computed(() => chat.messages.length > 0)
 const canChat = computed(() => settings.enabledProviders.length > 0)
-const title = computed(() => chat.currentSession?.title || t('chat.newChat'))
 
 /* 终端标签名与工作目录：优先当前会话所属项目，回落当前选择项目 */
 const terminalProject = computed(() => {
@@ -66,24 +66,12 @@ watch(
   }
 )
 
-/* 拖拽右侧栏左边缘调整宽度（拖拽期间禁用过渡与文本选中） */
-function startPanelResize(event: MouseEvent): void {
-  event.preventDefault()
-  const startX = event.clientX
-  const startWidth = layout.rightPanelWidth
-  const onMove = (e: MouseEvent): void => {
-    /* 左边缘：向左拖动（clientX 变小）即变宽 */
-    layout.setRightPanelWidth(startWidth - (e.clientX - startX))
-  }
-  const onUp = (): void => {
-    window.removeEventListener('mousemove', onMove)
-    window.removeEventListener('mouseup', onUp)
-    document.body.classList.remove('resizing')
-  }
-  window.addEventListener('mousemove', onMove)
-  window.addEventListener('mouseup', onUp)
-  document.body.classList.add('resizing')
-}
+/* 拖拽右侧栏左边缘调整宽度（统一复用 usePanelResize） */
+const { startResize: startPanelResize } = usePanelResize({
+  getWidth: () => layout.rightPanelWidth,
+  setWidth: layout.setRightPanelWidth,
+  edge: 'right'
+})
 
 let scrollFrame = 0
 /* 是否贴近底部：用户上翻阅读时不再强制吸底（避免打断查看思考内容/回翻） */
@@ -205,129 +193,10 @@ async function onRemoveMessage(message: { id: string }): Promise<void> {
     /* 取消 */
   }
 }
-
-/* 会话操作下拉命令分发 */
-function onChatCommand(command: string): void {
-  if (command === 'rename') {
-    void onRenameCurrent()
-  } else if (command === 'delete') {
-    void onDeleteCurrent()
-  }
-}
-
-/* 重命名当前会话 */
-async function onRenameCurrent(): Promise<void> {
-  const session = chat.currentSession
-  if (!session) {
-    return
-  }
-  try {
-    let name = session.title
-    const value = await new Promise<string>((resolve, reject) => {
-      Modal.confirm({
-        title: t('chat.renameSession'),
-        content: () => h(Input, { defaultValue: name, onChange: (event: Event) => { name = (event.target as HTMLInputElement).value } }),
-        okText: t('common.confirm'), cancelText: t('common.cancel'),
-        onOk: () => resolve(name), onCancel: () => reject('cancel')
-      })
-    })
-    await chat.renameSession(session.id, value || session.title)
-  } catch {
-    /* 取消 */
-  }
-}
-
-/* 删除当前会话 */
-async function onDeleteCurrent(): Promise<void> {
-  const session = chat.currentSession
-  if (!session) {
-    return
-  }
-  try {
-    await new Promise<void>((resolve, reject) => {
-      Modal.confirm({
-        title: t('chat.deleteSession'), content: t('chat.deleteConfirm'),
-        okText: t('common.delete'), cancelText: t('common.cancel'),
-        onOk: () => resolve(), onCancel: () => reject('cancel')
-      })
-    })
-    await chat.removeSession(session.id)
-    ElMessage.success(t('common.deleted'))
-  } catch {
-    /* 取消 */
-  }
-}
 </script>
 
 <template>
   <div class="chat-page">
-    <header
-      class="chat-header"
-      :class="{ 'mac-collapsed': settings.platform === 'darwin' && layout.sidebarCollapsed }"
-    >
-      <div class="chat-header-left">
-        <button
-          class="sidebar-toggle"
-          :title="layout.sidebarCollapsed ? t('chat.expandSidebar') : t('chat.collapseSidebar')"
-          @click="layout.toggleSidebar"
-        >
-          <span class="ui-icon"><Expand v-if="layout.sidebarCollapsed" /><Fold v-else /></span>
-        </button>
-
-        <div class="chat-title-wrap">
-          <div class="chat-title">{{ title }}</div>
-          <!-- 会话操作：重命名 / 删除（悬浮标题文案展示） -->
-          <a-dropdown
-            v-if="chat.currentId"
-            :trigger="['click']"
-            root-class="chat-title-dropdown"
-
-          >
-            <span class="ui-icon chat-title-more" :title="t('common.actions')"><MoreFilled /></span>
-            <template #popupRender>
-              <a-menu @click="({ key }) => onChatCommand(String(key))">
-                <a-menu-item key="rename">
-                  <span class="ui-icon"><EditPen /></span>{{ t('chat.renameSession') }}
-                </a-menu-item>
-                <a-menu-item key="delete">
-                  <span class="ui-icon"><Delete /></span>{{ t('chat.deleteSession') }}
-                </a-menu-item>
-              </a-menu>
-            </template>
-          </a-dropdown>
-        </div>
-      </div>
-
-      <!-- 右上角：底部终端 / 右侧侧栏（侧边任务）显隐开关 -->
-      <div class="chat-header-right">
-        <!-- 终端（底部）：终端窗口图标 -->
-        <button
-          class="sidebar-toggle"
-          :class="{ active: layout.terminalVisible }"
-          :title="layout.terminalVisible ? t('chat.hideTerminal') : t('chat.showTerminal')"
-          @click="layout.toggleTerminal"
-        >
-          <svg class="panel-icon" viewBox="0 0 24 24" aria-hidden="true">
-            <rect x="3" y="4.5" width="18" height="15" rx="2.5" />
-            <path d="M7.5 10l2.5 2.5-2.5 2.5" />
-            <path d="M12.5 15H17" />
-          </svg>
-        </button>
-        <!-- 侧边栏（右侧）：右栏布局图标 -->
-        <button
-          class="sidebar-toggle"
-          :class="{ active: layout.rightPanelVisible }"
-          :title="layout.rightPanelVisible ? t('chat.hideSidePanel') : t('chat.showSidePanel')"
-          @click="layout.toggleRightPanel"
-        >
-          <svg class="panel-icon" viewBox="0 0 24 24" aria-hidden="true">
-            <rect x="3" y="4.5" width="18" height="15" rx="2.5" />
-            <path d="M15 4.5v15" />
-          </svg>
-        </button>
-      </div>
-    </header>
-
     <!-- 工作区：左对话内容 + 右侧侧栏（侧边任务） -->
     <div class="chat-workspace">
       <!-- 侧栏隐藏时正文始终显示（放大态一并隐藏）；仅「显示且放大」时让位给侧栏，避免收起后正文被留白 -->
@@ -407,11 +276,13 @@ async function onDeleteCurrent(): Promise<void> {
         :class="{ maximized: layout.rightPanelMaximized }"
         :style="layout.rightPanelMaximized ? undefined : { width: `${layout.rightPanelWidth}px` }"
       >
-        <!-- 左边缘拖拽手柄：调整侧栏宽度（放大态下不可拖拽） -->
+        <!-- 左边缘拖拽手柄：拖拽调整侧栏宽度，双击恢复默认宽度（放大态下不可拖拽） -->
         <div
           v-if="!layout.rightPanelMaximized"
           class="side-panel-resizer"
+          :title="t('layout.resetPanelWidth')"
           @mousedown="startPanelResize"
+          @dblclick="layout.resetRightPanelWidth"
         ></div>
         <RightPanel :root="terminalProject?.path" :project-name="terminalProject?.name" />
       </aside>
@@ -435,96 +306,6 @@ async function onDeleteCurrent(): Promise<void> {
   flex-direction: column;
   height: 100%;
   min-width: 0;
-}
-
-.chat-header {
-  height: var(--desk-header-height);
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 32px;
-  border-bottom: 1px solid var(--desk-border);
-  gap: 16px;
-  /* 顶栏可拖拽移动窗口（模型选择器除外） */
-  -webkit-app-region: drag;
-}
-
-/* 侧栏折叠后标题栏顶到窗口最左侧：macOS 下为红黄绿按钮预留宽度，避免与折叠按钮重叠 */
-.chat-header.mac-collapsed {
-  padding-left: 80px;
-}
-
-.chat-header-left {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-width: 0;
-}
-
-/* 右上角开关组：终端 / 右侧侧栏显隐 */
-.chat-header-right {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  flex-shrink: 0;
-  -webkit-app-region: no-drag;
-}
-
-/* 开关激活态：高亮当前已展开的面板 */
-.sidebar-toggle.active {
-  background: var(--desk-primary-soft);
-  color: var(--desk-text);
-}
-
-/* 顶栏面板图标：随文字色着色（悬浮/激活态生效） */
-.panel-icon {
-  width: 16px;
-  height: 16px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.7;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-/* 标题 + 操作：仅悬浮标题文案区域时显示「...」 */
-.chat-title-wrap {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-  /* 顶栏为窗口拖拽区，此处排除拖拽，保证 :hover 正常触发与图标可点击 */
-  -webkit-app-region: no-drag;
-}
-
-.chat-title {
-  font-size: 14px;
-  font-weight: 600;
-  min-width: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* 会话操作用「...」：默认隐藏，悬浮标题文案时展示（顶栏为拖拽区，需排除以保证可点击） */
-.chat-title-more {
-  flex-shrink: 0;
-  font-size: 16px;
-  color: var(--desk-text-tertiary);
-  cursor: pointer;
-  outline: none;
-  visibility: hidden;
-  transition: color 0.15s ease;
-  -webkit-app-region: no-drag;
-}
-
-.chat-title-wrap:hover .chat-title-more {
-  visibility: visible;
-}
-
-.chat-title-more:hover {
-  color: var(--desk-text);
 }
 
 /* 工作区：左对话内容（自适应）+ 右侧侧栏 */

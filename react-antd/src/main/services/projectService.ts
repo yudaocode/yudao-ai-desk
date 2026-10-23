@@ -8,7 +8,7 @@ import { randomUUID } from 'crypto'
 import { eq, inArray } from 'drizzle-orm'
 import { getDb } from '../db'
 import { messageTable, projectTable, sessionTable } from '../db/schema'
-import type { ProjectCreateInput, ProjectDTO } from '../../shared/ipc'
+import type { ProjectCreateInput, ProjectDTO } from '@shared/ipc'
 
 type ProjectRow = typeof projectTable.$inferSelect
 

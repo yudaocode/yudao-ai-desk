@@ -6,7 +6,7 @@
 
 import { open, readdir, stat, writeFile as writeFileFs } from 'fs/promises'
 import { extname, isAbsolute, relative, resolve } from 'path'
-import type { FileContent, FsEntry } from '../../shared/ipc'
+import type { FileContent, FsEntry } from '@shared/ipc'
 
 /* 文本预览体积上限（超出仅截断展示） */
 const MAX_TEXT_BYTES = 2 * 1024 * 1024

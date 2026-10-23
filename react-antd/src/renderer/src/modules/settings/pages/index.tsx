@@ -1,7 +1,7 @@
 import './index.scss'
 /* 设置页：常规、个性化、供应商管理；保留上游字段和业务方法名称。 */
-import { useEffect, useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useEffect, useLayoutEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import {
   AutoComplete,
   Button,
@@ -17,27 +17,19 @@ import {
   Tooltip,
   message
 } from 'antd'
-import {
-  LeftOutlined,
-  MenuFoldOutlined,
-  MenuUnfoldOutlined,
-  PlusOutlined,
-  DeleteOutlined,
-  ReloadOutlined
-} from '@ant-design/icons'
-import { useSettingsStore } from '../../../stores/settings'
-import { useLayoutStore } from '../../../stores/layout'
-import { t } from '../../../i18n'
-import ShortcutInput from '../../../components/ShortcutInput'
-import { DEFAULT_SHORTCUTS } from '../../../../../shared/ipc'
-import logo from '../../../assets/icon.png'
+import { PlusOutlined, DeleteOutlined, ReloadOutlined } from '@ant-design/icons'
+import { useSettingsStore } from '@renderer/stores/settings'
+import { t } from '@renderer/i18n'
+import ShortcutInput from '@renderer/components/ShortcutInput'
+import { DEFAULT_SHORTCUTS } from '@shared/ipc'
+import logo from '@renderer/assets/icon.png'
 import type {
   AppSettings,
   ProviderDTO,
   QuickAction,
   RuntimeDetectResult,
   ShortcutMap
-} from '../../../../../shared/ipc'
+} from '@shared/ipc'
 const DEFAULT_SYSTEM_PROMPT = '你是 Yudao AI Desk 智能助手，回答简洁、准确、有条理。'
 const quickActions: { id: QuickAction; label: string }[] = [
   { id: 'newChat', label: 'chat.newChatAction' },
@@ -47,11 +39,13 @@ const quickActions: { id: QuickAction; label: string }[] = [
   { id: 'browser', label: 'panel.browser' }
 ]
 export default function SettingsPage() {
-  const navigate = useNavigate(),
-    [query] = useSearchParams(),
-    settings = useSettingsStore(),
-    layout = useLayoutStore()
-  const [activeTab, setActiveTab] = useState(query.get('tab') || 'general')
+  const [query] = useSearchParams(),
+    settings = useSettingsStore()
+  /* 支持从对话页「+新建供应商」跳转直达供应商 TAB（选中项由左侧子菜单共享；首帧绘制前生效） */
+  useLayoutEffect(() => {
+    const tab = query.get('tab')
+    if (tab) useSettingsStore.getState().setActiveTab(tab)
+  }, [])
   const [dataDirInput, setDataDirInput] = useState(settings.dataDir),
     [shortcuts, setShortcuts] = useState<ShortcutMap>({
       ...DEFAULT_SHORTCUTS,
@@ -658,26 +652,12 @@ export default function SettingsPage() {
   )
   return (
     <div className="settings-page">
-      <header
-        className={`settings-header${settings.platform === 'darwin' && layout.sidebarCollapsed ? ' mac-collapsed' : ''}`}
-      >
-        <button
-          className="sidebar-toggle"
-          title={t(layout.sidebarCollapsed ? 'chat.expandSidebar' : 'chat.collapseSidebar')}
-          onClick={layout.toggleSidebar}
-        >
-          {layout.sidebarCollapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
-        </button>
-        <Button type="text" icon={<LeftOutlined />} onClick={() => navigate('/')}>
-          {t('settings.back')}
-        </Button>
-        <div className="settings-title">{t('settings.title')}</div>
-      </header>
       <div className="settings-body desk-scroll">
         <div className="settings-inner">
           <Tabs
-            activeKey={activeTab}
-            onChange={setActiveTab}
+            className="settings-tabs"
+            activeKey={settings.activeTab}
+            onChange={settings.setActiveTab}
             items={[
               { key: 'general', label: t('settings.general'), children: general },
               {

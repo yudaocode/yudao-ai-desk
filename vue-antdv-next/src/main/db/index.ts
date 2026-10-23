@@ -7,7 +7,7 @@ import { mkdirSync } from 'fs'
 import { dirname } from 'path'
 import Database from 'better-sqlite3'
 import { drizzle, type BetterSQLite3Database } from 'drizzle-orm/better-sqlite3'
-import { getDbFile } from '../services/storageService'
+import { getDbFile } from '../config/paths'
 import * as schema from './schema'
 
 /* SQLite 建表脚本：桌面端本地库，无需外部服务 */

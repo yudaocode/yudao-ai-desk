@@ -1,0 +1,763 @@
+<script setup lang="ts">
+/*
+* 首页子菜单面板：新建对话 / 项目分组（项目下挂会话）/ 搜索命令面板
+* @author xuxueli 2026-10-18
+*/
+import { h, computed, nextTick, ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
+import { message as ElMessage, Modal, Input } from 'antdv-next'
+import { useChatStore } from '@renderer/stores/chat'
+import { useSettingsStore } from '@renderer/stores/settings'
+import { useProjectStore } from '@renderer/stores/project'
+import { useQuickAction } from '@renderer/composables/useQuickAction'
+import { t } from '@renderer/i18n'
+import { formatShortcut } from '@renderer/utils/shortcut'
+import type { ProjectDTO, QuickAction, SessionDTO } from '@shared/ipc'
+
+const router = useRouter()
+const chat = useChatStore()
+const settings = useSettingsStore()
+const project = useProjectStore()
+/* 快捷操作执行器（命令面板「快捷操作」） */
+const runQuickAction = useQuickAction()
+
+/* 项目展开状态（默认收起；选中/新建时自动展开） */
+const expanded = ref<Record<string, boolean>>({})
+
+/* 搜索面板状态与关键字 */
+const searchVisible = ref(false)
+const searchKeyword = ref('')
+const paletteInputRef = ref()
+
+/* 排序方式：名称 / 更新时间（默认按名称排序） */
+const sortBy = ref<'time' | 'name'>('name')
+
+/* 项目 → 其下会话 */
+function sessionsOf(projectId: string): SessionDTO[] {
+  return chat.sessions.filter((item) => item.projectId === projectId)
+}
+
+/* 按当前排序方式排序的会话 */
+function sortedSessionsOf(projectId: string): SessionDTO[] {
+  const list = sessionsOf(projectId)
+  if (sortBy.value === 'name') {
+    return [...list].sort((a, b) => (a.title || '').localeCompare(b.title || '', 'zh'))
+  }
+  return [...list].sort((a, b) => b.updateTime.localeCompare(a.updateTime))
+}
+
+/* 按当前排序方式排序的项目 */
+const sortedProjects = computed(() => {
+  const list = [...project.projects]
+  if (sortBy.value === 'name') {
+    return list.sort((a, b) => a.name.localeCompare(b.name, 'zh'))
+  }
+  return list.sort((a, b) => b.updateTime.localeCompare(a.updateTime))
+})
+
+/* 项目分组列表（一级项目 + 二级会话） */
+const projectGroups = computed(() =>
+  sortedProjects.value.map((item) => ({ project: item, sessions: sortedSessionsOf(item.id) }))
+)
+
+/* 切换排序方式 */
+function onSortCommand(command: string): void {
+  if (command === 'name' || command === 'time') {
+    sortBy.value = command
+  }
+}
+
+/* 项目名（会话结果右侧展示归属） */
+function projectNameOf(projectId: string): string {
+  return project.projects.find((item) => item.id === projectId)?.name ?? ''
+}
+
+/* 是否已输入关键字 */
+const hasKeyword = computed(() => searchKeyword.value.trim().length > 0)
+
+/* 关键字匹配：会话（按标题），最多展示 50 条 */
+const matchedSessions = computed(() => {
+  const key = searchKeyword.value.trim().toLowerCase()
+  if (!key) {
+    return []
+  }
+  return chat.sessions
+    .filter((item) => (item.title || '').toLowerCase().includes(key))
+    .slice(0, 50)
+})
+
+/* 未输入时固定展示最近在用的 5 条会话；输入后展示搜索结果 */
+const visibleSessions = computed(() =>
+  hasKeyword.value ? matchedSessions.value : chat.sessions.slice(0, 5)
+)
+
+/* 展开状态 */
+function isExpanded(projectId: string): boolean {
+  return Boolean(expanded.value[projectId])
+}
+
+/* 打开搜索面板（居中弹框） */
+function openSearch(): void {
+  searchKeyword.value = ''
+  searchVisible.value = true
+  nextTick(() => paletteInputRef.value?.focus())
+}
+
+/* 关闭搜索面板 */
+function closeSearch(): void {
+  searchVisible.value = false
+}
+
+/* 选中结果：定位并关闭 */
+function onPickSession(sessionId: string): void {
+  void onSelect(sessionId)
+  closeSearch()
+}
+
+/* 快捷操作：执行并关闭命令面板 */
+function onQuickAction(action: QuickAction): void {
+  runQuickAction(action)
+  closeSearch()
+}
+
+/* 点击项目：选中并折叠/展开 */
+function toggleProject(projectId: string): void {
+  project.selectProject(projectId)
+  expanded.value[projectId] = !expanded.value[projectId]
+}
+
+/* 当前项目变化时自动展开（点击会话/新建项目同步选中） */
+watch(
+  () => project.currentId,
+  (id) => {
+    if (id) {
+      expanded.value[id] = true
+    }
+  }
+)
+
+/* 「在文件管理器中显示」文案按运行平台区分 */
+const revealLabel = computed(() => {
+  if (settings.platform === 'darwin') {
+    return t('project.revealMac')
+  }
+  if (settings.platform === 'win32') {
+    return t('project.revealWin')
+  }
+  return t('project.revealLinux')
+})
+
+/* 新建项目：选择本地目录并自动生成项目 */
+async function onCreateProject(): Promise<void> {
+  try {
+    const created = await project.createProject()
+    if (created) {
+      expanded.value[created.id] = true
+    }
+  } catch (error) {
+    ElMessage.error((error as Error).message)
+  }
+}
+
+/* 项目操作下拉：重命名 / 在文件管理器中显示 / 删除 */
+function onProjectCommand(command: string, target: ProjectDTO): void {
+  if (command === 'rename') {
+    void onRenameProject(target)
+  } else if (command === 'reveal') {
+    void project.revealProject(target.id)
+  } else if (command === 'delete') {
+    void onDeleteProject(target)
+  }
+}
+
+/* 重命名项目 */
+async function onRenameProject(target: ProjectDTO): Promise<void> {
+  try {
+    let inputName = target.name
+    const value = await new Promise<string>((resolve, reject) => {
+      Modal.confirm({
+        title: t('project.rename'),
+        content: () => h(Input, { defaultValue: inputName, onChange: (event: Event) => { inputName = (event.target as HTMLInputElement).value } }),
+        okText: t('common.confirm'), cancelText: t('common.cancel'),
+        onOk: () => resolve(inputName), onCancel: () => reject('cancel')
+      })
+    })
+    const name = value?.trim()
+    if (name && name !== target.name) {
+      await project.renameProject(target.id, name)
+      ElMessage.success(t('project.renamed'))
+    }
+  } catch {
+    /* 取消 */
+  }
+}
+
+/* 删除项目：级联删除其下会话与消息 */
+async function onDeleteProject(target: ProjectDTO): Promise<void> {
+  try {
+    await new Promise<void>((resolve, reject) => {
+      Modal.confirm({
+        title: t('project.delete'), content: t('project.deleteConfirm', [target.name]),
+        okText: t('common.delete'), cancelText: t('common.cancel'),
+        onOk: () => resolve(), onCancel: () => reject('cancel')
+      })
+    })
+    await project.removeProject(target.id)
+    await chat.reloadSessions()
+    ElMessage.success(t('project.deleted'))
+  } catch {
+    /* 取消 */
+  }
+}
+
+/* 新建对话并回到对话页 */
+function onNew(): void {
+  chat.startNewChat()
+  router.push('/')
+}
+
+/* 选中会话并回到对话页 */
+async function onSelect(id: string): Promise<void> {
+  await chat.selectSession(id)
+  router.push('/')
+}
+
+/* 重命名会话：弹框输入，取消或未改动则保持原值 */
+async function onRename(id: string, title: string): Promise<void> {
+  try {
+    let inputName = title
+    const value = await new Promise<string>((resolve, reject) => {
+      Modal.confirm({
+        title: t('chat.renameSession'),
+        content: () => h(Input, { defaultValue: inputName, onChange: (event: Event) => { inputName = (event.target as HTMLInputElement).value } }),
+        okText: t('common.confirm'), cancelText: t('common.cancel'),
+        onOk: () => resolve(inputName), onCancel: () => reject('cancel')
+      })
+    })
+    await chat.renameSession(id, value || title)
+  } catch {
+    /* 取消 */
+  }
+}
+
+/* 删除会话：二次确认后移除 */
+async function onDelete(id: string): Promise<void> {
+  try {
+    await new Promise<void>((resolve, reject) => {
+      Modal.confirm({
+        title: t('chat.deleteSession'), content: t('chat.deleteConfirm'),
+        okText: t('common.delete'), cancelText: t('common.cancel'),
+        onOk: () => resolve(), onCancel: () => reject('cancel')
+      })
+    })
+    await chat.removeSession(id)
+    ElMessage.success(t('common.deleted'))
+  } catch {
+    /* 取消 */
+  }
+}
+</script>
+
+<template>
+  <div class="sidebar-head">
+    <div class="brand">
+      <div class="brand-text">
+        <div class="brand-name">{{ settings.settings.appName || t('app.name') }}</div>
+      </div>
+      <!-- 搜索入口：位于标题右侧，打开命令面板 -->
+      <span class="ui-icon brand-search" :title="t('common.search')" @click="openSearch">
+        <Search />
+      </span>
+    </div>
+    <div class="new-btn" @click="onNew">
+      <span class="ui-icon new-icon"><Edit /></span>
+      <span class="new-btn-label">{{ t('chat.newChatAction') }}</span>
+    </div>
+  </div>
+
+  <!-- 「项目:」标题：右侧 排序（...）与 + 新建项目，鼠标悬浮展示 -->
+  <div class="project-head">
+    <span class="project-label">{{ t('project.label') }}:</span>
+    <span class="project-head-actions">
+      <a-dropdown :trigger="['click']" root-class="sort-dropdown" >
+        <span class="ui-icon project-icon-btn" :title="t('common.actions')"><MoreFilled /></span>
+        <template #popupRender>
+          <a-menu @click="({ key }) => onSortCommand(String(key))">
+            <a-menu-item disabled class="sort-group">
+              {{ t('project.sortBy') }}
+            </a-menu-item>
+            <a-menu-item key="name">
+              {{ t('project.sortName') }}
+              <span v-if="sortBy === 'name'" class="ui-icon sort-check"><Check /></span>
+            </a-menu-item>
+            <a-menu-item key="time">
+              {{ t('project.sortTime') }}
+              <span v-if="sortBy === 'time'" class="ui-icon sort-check"><Check /></span>
+            </a-menu-item>
+          </a-menu>
+        </template>
+      </a-dropdown>
+      <span class="ui-icon project-icon-btn" :title="t('project.new')" @click="onCreateProject">
+        <Plus />
+      </span>
+    </span>
+  </div>
+
+  <div class="desk-scroll sidebar-list">
+    <div v-for="group in projectGroups" :key="group.project.id" class="project-group">
+      <div
+        class="project-item"
+        :class="{ active: group.project.id === project.currentId }"
+        @click="toggleProject(group.project.id)"
+      >
+        <span class="ui-icon project-icon">
+          <FolderOpened v-if="isExpanded(group.project.id)" />
+          <Folder v-else />
+        </span>
+        <span class="project-name" :title="group.project.path">{{ group.project.name }}</span>
+        <span class="project-actions" @click.stop>
+          <a-dropdown :trigger="['click']" >
+            <span class="ui-icon op" :title="t('common.actions')"><MoreFilled /></span>
+            <template #popupRender>
+              <a-menu @click="({ key }) => onProjectCommand(String(key), group.project)">
+                <a-menu-item key="rename">
+                  <span class="ui-icon"><EditPen /></span>{{ t('project.rename') }}
+                </a-menu-item>
+                <a-menu-item key="reveal">
+                  <span class="ui-icon"><FolderOpened /></span>{{ revealLabel }}
+                </a-menu-item>
+                <a-menu-divider />
+                <a-menu-item key="delete">
+                  <span class="ui-icon"><Delete /></span>{{ t('project.delete') }}
+                </a-menu-item>
+              </a-menu>
+            </template>
+          </a-dropdown>
+          <span class="ui-icon op" :title="t('project.rename')" @click="onRenameProject(group.project)">
+            <EditPen />
+          </span>
+        </span>
+      </div>
+
+      <div v-if="isExpanded(group.project.id)" class="project-sessions">
+        <div
+          v-for="session in group.sessions"
+          :key="session.id"
+          class="session-item"
+          :class="{ active: session.id === chat.currentId }"
+          @click="onSelect(session.id)"
+        >
+          <span class="session-title">{{ session.title || t('chat.newChat') }}</span>
+          <span class="session-actions" @click.stop>
+            <span class="ui-icon op" @click="onRename(session.id, session.title)"><EditPen /></span>
+            <span class="ui-icon op" @click="onDelete(session.id)"><Delete /></span>
+          </span>
+        </div>
+        <div v-if="group.sessions.length === 0" class="session-empty">
+          {{ t('project.noSession') }}
+        </div>
+      </div>
+    </div>
+    <a-empty v-if="projectGroups.length === 0" :description="t('project.empty')" />
+  </div>
+
+  <!-- 搜索命令面板：项目/会话关键字搜索 + 推荐入口 -->
+  <teleport to="body">
+    <div v-if="searchVisible" class="palette-mask" @mousedown.self="closeSearch">
+      <div class="palette" @mousedown.stop>
+        <div class="palette-input">
+          <span class="ui-icon palette-input-icon"><Search /></span>
+          <input
+            ref="paletteInputRef"
+            v-model="searchKeyword"
+            class="palette-input-field"
+            :placeholder="t('project.searchPlaceholder')"
+            @keydown.esc="closeSearch"
+          />
+        </div>
+
+        <div class="palette-body">
+          <template v-if="visibleSessions.length > 0">
+            <div class="palette-section">
+              {{ hasKeyword ? t('chat.sessions') : t('chat.recentSessions') }}
+            </div>
+            <div
+              v-for="item in visibleSessions"
+              :key="item.id"
+              class="palette-item"
+              @click="onPickSession(item.id)"
+            >
+              <span class="ui-icon palette-item-icon"><ChatLineRound /></span>
+              <span class="palette-item-title">{{ item.title || t('chat.newChat') }}</span>
+              <span class="palette-item-meta">{{ projectNameOf(item.projectId) }}</span>
+            </div>
+          </template>
+
+          <div v-if="hasKeyword && matchedSessions.length === 0" class="palette-empty">
+            {{ t('common.empty') }}
+          </div>
+
+          <div class="palette-section">{{ t('project.quickActions') }}</div>
+          <div class="palette-item" @click="onQuickAction('newChat')">
+            <span class="ui-icon palette-item-icon"><Edit /></span>
+            <span class="palette-item-title">{{ t('chat.newChatAction') }}</span>
+            <span class="palette-item-meta">{{ formatShortcut(settings.settings.shortcuts?.newChat) }}</span>
+          </div>
+          <div class="palette-item" @click="onQuickAction('settings')">
+            <span class="ui-icon palette-item-icon"><Setting /></span>
+            <span class="palette-item-title">{{ t('settings.title') }}</span>
+            <span class="palette-item-meta">{{ formatShortcut(settings.settings.shortcuts?.settings) }}</span>
+          </div>
+          <div class="palette-item" @click="onQuickAction('terminal')">
+            <svg class="desk-svg-icon palette-item-svg" viewBox="0 0 24 24" aria-hidden="true">
+              <rect x="3" y="4.5" width="18" height="15" rx="2.5" />
+              <path d="M7.5 10l2.5 2.5-2.5 2.5" />
+              <path d="M12.5 15H17" />
+            </svg>
+            <span class="palette-item-title">{{ t('chat.terminal') }}</span>
+            <span class="palette-item-meta">{{ formatShortcut(settings.settings.shortcuts?.terminal) }}</span>
+          </div>
+          <div class="palette-item" @click="onQuickAction('files')">
+            <span class="ui-icon palette-item-icon"><Folder /></span>
+            <span class="palette-item-title">{{ t('panel.files') }}</span>
+            <span class="palette-item-meta">{{ formatShortcut(settings.settings.shortcuts?.files) }}</span>
+          </div>
+          <div class="palette-item" @click="onQuickAction('browser')">
+            <svg class="desk-svg-icon palette-item-svg" viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="12" cy="12" r="9" />
+              <path d="M3 12h18" />
+              <path d="M12 3c2.5 2.6 4 5.6 4 9s-1.5 6.4-4 9c-2.5-2.6-4-5.6-4-9s1.5-6.4 4-9z" />
+            </svg>
+            <span class="palette-item-title">{{ t('panel.browser') }}</span>
+            <span class="palette-item-meta">{{ formatShortcut(settings.settings.shortcuts?.browser) }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </teleport>
+</template>
+
+<style scoped lang="scss">
+.sidebar-head {
+  padding: 10px 16px 12px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  min-width: 0;
+  margin-bottom: 16px;
+}
+
+.brand-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.brand-name {
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 32px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 标题右侧搜索入口 */
+.brand-search {
+  flex-shrink: 0;
+  font-size: 16px;
+  color: var(--desk-text-secondary);
+  cursor: pointer;
+  -webkit-app-region: no-drag;
+  transition: color 0.15s ease;
+}
+
+.brand-search:hover {
+  color: var(--desk-primary);
+}
+
+/* 新建对话：与会话条目同款列表行，文字色/字重对齐选中项目名（近黑 + 加粗） */
+.new-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px 6px 0;
+  border-radius: 10px;
+  cursor: pointer;
+  color: var(--desk-text);
+  font-size: 14px;
+  font-weight: 600;
+  transition: background 0.15s ease;
+  -webkit-app-region: no-drag;
+}
+
+.new-btn:hover {
+  background: var(--desk-primary-soft);
+  color: var(--desk-text);
+}
+
+.new-icon {
+  flex-shrink: 0;
+}
+
+/* 「项目:」分组标题：右侧排序/新建入口 */
+.project-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px 6px;
+}
+
+.project-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--desk-text-tertiary);
+}
+
+/* 排序/新建入口：默认隐藏，悬浮「项目:」标题行时展示 */
+.project-head-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  visibility: hidden;
+}
+
+.project-head:hover .project-head-actions {
+  visibility: visible;
+}
+
+.project-icon-btn {
+  font-size: 14px;
+  color: var(--desk-text-secondary);
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.project-icon-btn:hover {
+  color: var(--desk-primary);
+}
+
+/* --- 搜索命令面板（居中弹框 + 遮罩） --- */
+.palette-mask {
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.palette {
+  width: 640px;
+  max-width: calc(100vw - 40px);
+  max-height: 60vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--desk-bg);
+  border: 1px solid var(--desk-border);
+  border-radius: var(--desk-radius-sm);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.22);
+  overflow: hidden;
+}
+
+.palette-input {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--desk-border);
+  color: var(--desk-text-tertiary);
+}
+
+.palette-input-field {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--desk-text);
+  font-size: 14px;
+  font-family: inherit;
+}
+
+.palette-input-field::placeholder {
+  color: var(--desk-text-tertiary);
+}
+
+.palette-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 6px;
+}
+
+.palette-section {
+  padding: 8px 10px 4px;
+  font-size: 12px;
+  color: var(--desk-text-tertiary);
+}
+
+.palette-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  color: var(--desk-text-secondary);
+  font-size: 14px;
+  transition: background 0.12s ease;
+}
+
+.palette-item:hover {
+  background: var(--desk-primary-soft);
+  color: var(--desk-text);
+}
+
+.palette-item-icon {
+  flex-shrink: 0;
+  font-size: 15px;
+}
+
+/* 内联 SVG 图标（终端 / 浏览器）：尺寸 */
+.palette-item-svg {
+  flex-shrink: 0;
+  width: 15px;
+  height: 15px;
+}
+
+.palette-item-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.palette-item-meta {
+  flex-shrink: 0;
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  color: var(--desk-text-tertiary);
+}
+
+.palette-empty {
+  padding: 10px;
+  font-size: 13px;
+  color: var(--desk-text-tertiary);
+  text-align: center;
+}
+
+.project-group {
+  margin-bottom: 2px;
+}
+
+/* 项目行：与折叠箭头/图标同排，悬浮显示操作 */
+.project-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px 6px 6px;
+  border-radius: 10px;
+  cursor: pointer;
+  color: var(--desk-text-secondary);
+  font-size: 14px;
+  transition: background 0.15s ease;
+}
+
+.project-item:hover {
+  background: var(--desk-primary-soft);
+}
+
+.project-item.active {
+  color: var(--desk-text);
+  font-weight: 600;
+}
+
+.project-icon {
+  flex-shrink: 0;
+}
+
+.project-name {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.project-actions {
+  display: none;
+  align-items: center;
+  gap: 6px;
+}
+
+.project-item:hover .project-actions {
+  display: inline-flex;
+}
+
+/* 项目下的会话缩进展示 */
+.project-sessions {
+  padding-left: 16px;
+}
+
+.session-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  margin-bottom: 2px;
+  border-radius: 10px;
+  cursor: pointer;
+  color: var(--desk-text-secondary);
+  transition: background 0.15s ease;
+  font-size: 14px;
+}
+
+.session-item:hover {
+  background: var(--desk-primary-soft);
+}
+
+.session-item.active {
+  background: var(--desk-primary-soft);
+  color: var(--desk-text);
+}
+
+.session-title {
+  flex: 1;
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.session-actions {
+  display: none;
+  gap: 6px;
+}
+
+.session-item:hover .session-actions {
+  display: inline-flex;
+}
+
+.session-empty {
+  padding: 6px 12px;
+  font-size: 12px;
+  color: var(--desk-text-tertiary);
+}
+
+.op {
+  font-size: 13px;
+  color: var(--desk-text-tertiary);
+}
+
+.op:hover {
+  color: var(--desk-primary);
+}
+</style>

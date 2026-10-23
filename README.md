@@ -2,13 +2,13 @@
 
 Yudao AI Desk 是面向个人开发者的 AI 桌面工作台。围绕本机项目，在一个窗口中完成对话、阅读代码、编辑文件和运行命令。
 
-项目参考自 [XXL-AI 的 Desk](https://github.com/xuxueli/xxl-ai/tree/master/xxl-ai-desk)，提供 **Vue3 + ant dv next** 和 **React + Ant Design** 两个版本。
+项目参考自 [XXL-AI 的 Desk](https://github.com/xuxueli/xxl-ai/tree/master/xxl-ai-desk)，提供 **Vue3 + antdv-next** 和 **React + Ant Design** 两个版本。
 
 ## 两个版本
 
 | 版本 | 技术栈 | 目录 |
 | --- | --- | --- |
-| Vue | Vue3、TypeScript、ant dv next、Pinia | [vue-antdv-next](./vue-antdv-next/) |
+| Vue | Vue3、TypeScript、antdv-next、Pinia | [vue-antdv-next](./vue-antdv-next/) |
 | React | React、TypeScript、Ant Design、Zustand | [react-antd](./react-antd/) |
 
 两个版本功能一致，各自包含完整的 Electron 客户端、前端和运行环境，可以独立开发、构建和使用。根据熟悉的技术栈选择一个即可。
@@ -18,6 +18,7 @@ Yudao AI Desk 是面向个人开发者的 AI 桌面工作台。围绕本机项�
 | 功能 | 说明 |
 | --- | --- |
 | 项目工作区 | 将项目关联到本机目录，围绕项目创建和管理会话 |
+| 导航与布局 | 左侧图标栏切换首页与系统设置，顶栏后退 / 前进与会话操作，侧栏和右侧面板宽度可拖拽并记住 |
 | Plan / Build | Plan 用于阅读、搜索和分析；Build 增加文件修改和命令执行 |
 | 流式对话 | 逐步显示回复，支持 Markdown、代码高亮、复制与停止生成 |
 | 工具执行过程 | 按发生顺序展示思考、工具和正文，查看参数、状态、耗时与结果 |
@@ -95,7 +96,7 @@ npm run dev
 
 首次使用：
 
-1. 打开「设置 → 模型供应商」，配置服务地址、API Key 和可用模型。
+1. 打开「系统设置 → 模型供应商」，配置服务地址、API Key 和可用模型。
 2. 创建项目，选择本机工作目录。
 3. 新建会话，选择模型与 Plan / Build 模式，开始对话。
 4. 根据需要打开文件、终端或浏览器面板。
@@ -110,7 +111,7 @@ npm run dev
 | `npm run type-check` | 检查 TypeScript 类型 |
 | `npm run build` | 构建主进程、preload 和前端 |
 | `npm run pack` | 生成本地应用目录 |
-| `npm run build:mac` | 构建 macOS 安装包 |
+| `npm run build:mac` | 构建 macOS 安装包（Apple Silicon / arm64） |
 | `npm run build:win` | 构建 Windows 安装包 |
 
 构建产物位于各版本的 `release/` 目录。两版使用独立的应用名称和默认数据目录。

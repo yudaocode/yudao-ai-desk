@@ -1,8 +1,8 @@
 import './ShortcutInput.scss'
 /* 快捷键录制：焦点态录制组合键，Esc 退出并阻止全局快捷键。 */
 import { useState, type KeyboardEvent } from 'react'
-import { t } from '../i18n'
-import { eventToBinding, formatShortcut, isModifierKey } from '../utils/shortcut'
+import { t } from '@renderer/i18n'
+import { eventToBinding, formatShortcut, isModifierKey } from '@renderer/utils/shortcut'
 export default function ShortcutInput({
   value,
   onChange

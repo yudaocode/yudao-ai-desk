@@ -1,0 +1,33 @@
+/* modules/chat/components/Sidebar.vue */
+@scope (.desk-sidebar) {
+  /* 列表面板：图标栏右侧，折叠时隐藏；与右侧正文之间保留间隔线 */
+  .sidebar-panel {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border-right: 1px solid var(--desk-border);
+  }
+
+  /* 右边缘拖拽手柄：调整面板宽度 */
+  .sidebar-resizer {
+    position: absolute;
+    top: 0;
+    right: 0;
+    z-index: 10;
+    width: 5px;
+    height: 100%;
+    cursor: col-resize;
+    -webkit-app-region: no-drag;
+  }
+
+  .sidebar-resizer:hover {
+    background: var(--desk-primary-soft);
+  }
+}
+
+/* 拖拽期间保持手柄高亮（body 位于作用域根之外，不放入 @scope） */
+body.resizing .desk-sidebar .sidebar-resizer {
+  background: var(--desk-primary-soft);
+}

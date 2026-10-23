@@ -1,31 +1,26 @@
 <script setup lang="ts">
 /* 设置页：常规 + 个性化 + 供应商管理 */
 import { computed, onMounted, ref, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 import { message as ElMessage, Modal, Input } from 'antdv-next'
-import { useSettingsStore } from '../../../stores/settings'
-import { useLayoutStore } from '../../../stores/layout'
-import { t } from '../../../i18n'
-import ShortcutInput from '../../../components/ShortcutInput.vue'
-import { DEFAULT_SHORTCUTS } from '../../../../../shared/ipc'
-import logo from '../../../assets/icon.png'
+import { useSettingsStore } from '@renderer/stores/settings'
+import { t } from '@renderer/i18n'
+import ShortcutInput from '@renderer/components/ShortcutInput.vue'
+import { DEFAULT_SHORTCUTS } from '@shared/ipc'
+import logo from '@renderer/assets/icon.png'
 import type {
   AppSettings,
   ProviderDTO,
   QuickAction,
   RuntimeDetectResult,
   ShortcutMap
-} from '../../../../../shared/ipc'
+} from '@shared/ipc'
 
 const route = useRoute()
-const router = useRouter()
 const settings = useSettingsStore()
-const layout = useLayoutStore()
-/* 当前选中的设置标签页 */
-const activeTab = ref('general')
-/* 支持从对话页「+新建供应商」跳转直达供应商 TAB */
+/* 支持从对话页「+新建供应商」跳转直达供应商 TAB（选中项由左侧子菜单共享） */
 if (typeof route.query.tab === 'string' && route.query.tab) {
-  activeTab.value = route.query.tab
+  settings.activeTab = route.query.tab
 }
 
 /* --- 常规：主题 / 语言切换后立即生效（无需保存） --- */
@@ -443,36 +438,13 @@ async function removeProvider(row: ProviderDTO): Promise<void> {
 async function toggleProvider(row: ProviderDTO, value: boolean): Promise<void> {
   await settings.saveProvider({ id: row.id, enabled: value })
 }
-
-/* 返回对话页 */
-function back(): void {
-  router.push('/')
-}
 </script>
 
 <template>
   <div class="settings-page">
-    <header
-      class="settings-header"
-      :class="{ 'mac-collapsed': settings.platform === 'darwin' && layout.sidebarCollapsed }"
-    >
-      <button
-        class="sidebar-toggle"
-        :title="layout.sidebarCollapsed ? t('chat.expandSidebar') : t('chat.collapseSidebar')"
-        @click="layout.toggleSidebar"
-      >
-        <span class="ui-icon"><Expand v-if="layout.sidebarCollapsed" /><Fold v-else /></span>
-      </button>
-      <a-button type="text" @click="back">
-        <span class="ui-icon"><ArrowLeft /></span>
-        {{ t('settings.back') }}
-      </a-button>
-      <div class="settings-title">{{ t('settings.title') }}</div>
-    </header>
-
     <div class="desk-scroll settings-body">
       <div class="settings-inner">
-        <a-tabs v-model:active-key="activeTab">
+        <a-tabs v-model:active-key="settings.activeTab" class="settings-tabs">
           <!-- 通用 -->
           <a-tab-pane :tab="t('settings.general')" key="general">
             <a-form layout="vertical" class="settings-form">
@@ -809,34 +781,14 @@ function back(): void {
   font-size: 14px;
 }
 
-.settings-header {
-  height: var(--desk-header-height);
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 0 24px;
-  border-bottom: 1px solid var(--desk-border);
-  /* 顶栏可拖拽移动窗口（返回按钮除外） */
-  -webkit-app-region: drag;
-}
-
-/* 侧栏折叠后标题栏顶到窗口最左侧：macOS 下为红黄绿按钮预留宽度，避免与折叠按钮重叠 */
-.settings-header.mac-collapsed {
-  padding-left: 80px;
-}
-
-.settings-header :deep(.ant-btn) {
-  -webkit-app-region: no-drag;
-}
-
-.settings-title {
-  font-size: 16px;
-  font-weight: 600;
-}
-
+/* 顶栏可拖拽移动窗口（导航控件除外） */
 .settings-body {
   flex: 1;
+}
+
+/* 设置分类已移至左侧子菜单：隐藏内嵌 Tabs 头部，仅渲染当前分类内容 */
+.settings-tabs :deep(.ant-tabs-nav) {
+  display: none;
 }
 
 .settings-inner {

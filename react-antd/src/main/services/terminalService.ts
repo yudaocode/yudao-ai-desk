@@ -10,12 +10,12 @@ import { existsSync, mkdirSync, statSync, writeFileSync } from 'fs'
 import { basename, join } from 'path'
 import * as pty from 'node-pty'
 import type { IPty } from 'node-pty'
-import type { TerminalCreateInput, TerminalDTO, TerminalEvent } from '../../shared/ipc'
+import type { TerminalCreateInput, TerminalDTO, TerminalEvent } from '@shared/ipc'
 import {
   buildRuntimePath,
   getRuntimeShellDir,
   runtimePathPrefix
-} from './runtimeService'
+} from './envService'
 
 /* 受管终端会话：id → PTY 进程 */
 interface TerminalSession {

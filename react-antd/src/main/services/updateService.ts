@@ -6,7 +6,7 @@
  */
 
 import { app, net, shell } from 'electron'
-import type { UpdateInfo } from '../../shared/ipc'
+import type { UpdateInfo } from '@shared/ipc'
 
 /* 发布仓库与 Releases 接口（公开仓库匿名访问；失败由调用方兜底） */
 const REPO = process.env.YUDAO_AI_DESK_RELEASE_REPO?.trim() || ''

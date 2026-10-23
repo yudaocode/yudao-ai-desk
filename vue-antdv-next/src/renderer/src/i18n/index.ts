@@ -1,7 +1,7 @@
 /* 国际化：装配 zh/en 词条，语言由设置驱动 */
 import { createI18n } from 'vue-i18n'
-import zh from './locales/zh.json'
-import en from './locales/en.json'
+import zh from '@renderer/i18n/locales/zh.json'
+import en from '@renderer/i18n/locales/en.json'
 
 /* 国际化：语言由设置驱动，不支持运行时切换（重启生效） */
 export const i18n = createI18n({

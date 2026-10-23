@@ -1,16 +1,14 @@
-/* 布局状态：左侧会话栏折叠/展开 + 宽度拖拽 */
+/* 布局状态：左侧栏折叠/宽度、底部终端、右侧侧栏（侧边任务） */
 
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import { createPersistedWidth } from '@renderer/utils/persistedWidth'
 
 export const useLayoutStore = defineStore('layout', () => {
-  /* 侧栏宽度约束与默认值 */
-  const DEFAULT_WIDTH = 292
-  const MIN_WIDTH = 220
-  const MAX_WIDTH = 560
-  const STORAGE_KEY = 'desk-sidebar-width'
+  /* 左侧子菜单栏宽度：三板块共用（拖拽调整、持久化、双击复位） */
+  const panel = createPersistedWidth('desk-panel-width', { default: 240, min: 180, max: 520 })
 
-  /* 侧栏是否折叠（折叠后宽度收为 0，内容区铺满） */
+  /* 左侧栏是否折叠（折叠后仅保留图标栏，内容区铺满） */
   const sidebarCollapsed = ref(false)
 
   /* 底部终端面板是否展示（默认隐藏） */
@@ -31,31 +29,21 @@ export const useLayoutStore = defineStore('layout', () => {
     browser: 480
   }
 
-  /* 侧栏宽度（持久化到 localStorage，下次启动沿用） */
-  const stored = Number(localStorage.getItem(STORAGE_KEY))
-  const sidebarWidth = ref(
-    Number.isFinite(stored) && stored >= MIN_WIDTH && stored <= MAX_WIDTH ? stored : DEFAULT_WIDTH
-  )
-
-  /* 右侧侧栏（侧边任务）宽度约束与默认值 */
-  const RIGHT_PANEL_DEFAULT_WIDTH = 320
-  const RIGHT_PANEL_MIN_WIDTH = 240
-  const RIGHT_PANEL_MAX_WIDTH = 720
-  const RIGHT_PANEL_STORAGE_KEY = 'desk-right-panel-width'
-
-  /* 右侧侧栏宽度（持久化到 localStorage，下次启动沿用） */
-  const storedRight = Number(localStorage.getItem(RIGHT_PANEL_STORAGE_KEY))
-  const rightPanelWidth = ref(
-    Number.isFinite(storedRight) &&
-      storedRight >= RIGHT_PANEL_MIN_WIDTH &&
-      storedRight <= RIGHT_PANEL_MAX_WIDTH
-      ? storedRight
-      : RIGHT_PANEL_DEFAULT_WIDTH
-  )
+  /* 右侧侧栏宽度（拖拽调整、持久化） */
+  const rightPanel = createPersistedWidth('desk-right-panel-width', {
+    default: 320,
+    min: 240,
+    max: 720
+  })
 
   /* 切换侧栏折叠状态 */
   function toggleSidebar(): void {
     sidebarCollapsed.value = !sidebarCollapsed.value
+  }
+
+  /* 展开侧栏（图标栏点击入口时还原完整子菜单栏） */
+  function expandSidebar(): void {
+    sidebarCollapsed.value = false
   }
 
   /* 切换底部终端面板显隐 */
@@ -76,8 +64,8 @@ export const useLayoutStore = defineStore('layout', () => {
   /* 打开右侧侧栏并定位到指定工具（宽度不足时套用该工具默认宽度） */
   function openRightPanelTool(tool: 'files' | 'browser'): void {
     const defaultWidth = RIGHT_PANEL_TOOL_WIDTH[tool]
-    if (!rightPanelVisible.value || rightPanelWidth.value < defaultWidth) {
-      setRightPanelWidth(defaultWidth)
+    if (!rightPanelVisible.value || rightPanel.width.value < defaultWidth) {
+      rightPanel.setWidth(defaultWidth)
     }
     rightPanelTool.value = tool
     rightPanelVisible.value = true
@@ -88,35 +76,24 @@ export const useLayoutStore = defineStore('layout', () => {
     rightPanelMaximized.value = !rightPanelMaximized.value
   }
 
-  /* 设置侧栏宽度（夹取到合理区间并持久化） */
-  function setSidebarWidth(width: number): void {
-    const next = Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, Math.round(width)))
-    sidebarWidth.value = next
-    localStorage.setItem(STORAGE_KEY, String(next))
-  }
-
-  /* 设置右侧侧栏宽度（夹取到合理区间并持久化） */
-  function setRightPanelWidth(width: number): void {
-    const next = Math.min(RIGHT_PANEL_MAX_WIDTH, Math.max(RIGHT_PANEL_MIN_WIDTH, Math.round(width)))
-    rightPanelWidth.value = next
-    localStorage.setItem(RIGHT_PANEL_STORAGE_KEY, String(next))
-  }
-
   return {
     sidebarCollapsed,
-    sidebarWidth,
+    panelWidth: panel.width,
+    setPanelWidth: panel.setWidth,
+    resetPanelWidth: panel.resetWidth,
     terminalVisible,
     rightPanelVisible,
     rightPanelTool,
     rightPanelMaximized,
-    rightPanelWidth,
+    rightPanelWidth: rightPanel.width,
+    resetRightPanelWidth: rightPanel.resetWidth,
     toggleSidebar,
+    expandSidebar,
     toggleTerminal,
     openTerminal,
     toggleRightPanel,
     openRightPanelTool,
     toggleRightPanelMaximized,
-    setSidebarWidth,
-    setRightPanelWidth
+    setRightPanelWidth: rightPanel.setWidth
   }
 })

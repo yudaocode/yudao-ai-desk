@@ -4,15 +4,16 @@ import { computed, onBeforeUnmount, onMounted } from 'vue'
 import { theme } from 'antdv-next'
 import zhCN from 'antdv-next/locale/zh_CN'
 import enUS from 'antdv-next/locale/en_US'
-import Sidebar from './components/Sidebar.vue'
-import ApprovalDialog from './components/ApprovalDialog.vue'
-import { useSettingsStore } from './stores/settings'
-import { useChatStore } from './stores/chat'
-import { useProjectStore } from './stores/project'
-import { useQuickAction } from './composables/useQuickAction'
-import { matchShortcut } from './utils/shortcut'
+import Sidebar from '@renderer/modules/chat/components/Sidebar.vue'
+import ApprovalDialog from '@renderer/components/ApprovalDialog.vue'
+import AppTopbar from '@renderer/components/AppTopbar.vue'
+import { useSettingsStore } from '@renderer/stores/settings'
+import { useChatStore } from '@renderer/stores/chat'
+import { useProjectStore } from '@renderer/stores/project'
+import { useQuickAction } from '@renderer/composables/useQuickAction'
+import { matchShortcut } from '@renderer/utils/shortcut'
 import { t } from './i18n'
-import type { QuickAction } from '../../shared/ipc'
+import type { QuickAction } from '@shared/ipc'
 
 const settings = useSettingsStore()
 const chat = useChatStore()
@@ -83,10 +84,16 @@ onBeforeUnmount(() => {
 <template>
   <a-config-provider :locale="settings.settings.language === 'en' ? enUS : zhCN" :theme="antTheme">
   <div class="desk-shell">
-    <Sidebar />
-    <div class="desk-main">
-      <RouterView />
+    <!-- 全局顶栏：红黄绿（系统）+ 后退/前进 + 折叠按钮；页面标题/操作随路由展示 -->
+    <AppTopbar />
+
+    <div class="desk-body">
+      <Sidebar />
+      <div class="desk-main">
+        <RouterView />
+      </div>
     </div>
+
     <!-- 越界访问审批：全局应用内对话框 -->
     <ApprovalDialog />
 

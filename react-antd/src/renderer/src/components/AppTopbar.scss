@@ -1,0 +1,56 @@
+/* components/AppTopbar.vue */
+@scope (.desk-topbar) {
+  /* 标题前分隔线（｜）：区分导航控件与标题，仅在存在标题时渲染 */
+  .topbar-sep {
+    flex-shrink: 0;
+    width: 1px;
+    height: 15px;
+    background: var(--desk-text-tertiary);
+    opacity: 0.45;
+  }
+
+  /* 标题 + 操作：仅悬浮标题文案区域时显示「...」 */
+  .chat-title-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    /* 顶栏为窗口拖拽区，此处排除拖拽，保证 :hover 正常触发与图标可点击 */
+    -webkit-app-region: no-drag;
+  }
+
+  .chat-title {
+    font-size: 14px;
+    font-weight: 600;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* 会话操作用「...」：默认隐藏，悬浮标题文案时展示 */
+  .chat-title-more {
+    flex-shrink: 0;
+    font-size: 16px;
+    color: var(--desk-text-tertiary);
+    cursor: pointer;
+    outline: none;
+    visibility: hidden;
+    transition: color 0.15s ease;
+    -webkit-app-region: no-drag;
+  }
+
+  .chat-title-wrap:hover .chat-title-more {
+    visibility: visible;
+  }
+
+  .chat-title-more:hover {
+    color: var(--desk-text);
+  }
+
+  /* 非对话页标题（插件 / 系统设置） */
+  .topbar-title {
+    font-size: 16px;
+    font-weight: 600;
+  }
+}

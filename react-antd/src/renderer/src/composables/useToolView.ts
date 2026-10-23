@@ -3,8 +3,8 @@
  * 让每一步执行都能在时间线上被看懂（做了什么、对谁做）。
  */
 
-import { t } from '../i18n'
-import type { ToolCallState } from '../types'
+import { t } from '@renderer/i18n'
+import type { ToolCallState } from '@renderer/types'
 
 /* 工具展示视图 */
 export interface ToolView {

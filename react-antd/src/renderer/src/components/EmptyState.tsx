@@ -1,8 +1,8 @@
 import './EmptyState.scss'
 /* 空态欢迎页：Logo + 标题（项目选择位于输入框下方）。 */
-import { t } from '../i18n'
-import { useSettingsStore } from '../stores/settings'
-import logo from '../assets/icon.png'
+import { t } from '@renderer/i18n'
+import { useSettingsStore } from '@renderer/stores/settings'
+import logo from '@renderer/assets/icon.png'
 export default function EmptyState() {
   const slogan = useSettingsStore((state) => state.settings.slogan)
   return (

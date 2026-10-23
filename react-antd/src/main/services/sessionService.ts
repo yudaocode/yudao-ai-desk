@@ -7,7 +7,7 @@ import { randomUUID } from 'crypto'
 import { and, asc, eq, gt, inArray } from 'drizzle-orm'
 import { getDb } from '../db'
 import { messageTable, sessionTable } from '../db/schema'
-import type { SessionDTO, StoredMessage } from '../../shared/ipc'
+import type { SessionDTO, StoredMessage } from '@shared/ipc'
 
 type SessionRow = typeof sessionTable.$inferSelect
 type MessageRow = typeof messageTable.$inferSelect

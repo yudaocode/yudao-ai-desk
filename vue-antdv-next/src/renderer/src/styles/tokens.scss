@@ -4,6 +4,9 @@
   --desk-bg: #ffffff;
   --desk-bg-elevated: #f7f7f8;
   --desk-sidebar: #f9f9f9;
+  /* 左侧图标栏 + 顶部栏：同色且最深；展开的列表面板：略浅 */
+  --desk-chrome-bg: #ececec;
+  --desk-panel-bg: #f6f6f6;
   --desk-border: #ececec;
   --desk-border-soft: rgba(0, 0, 0, 0.06);
   --desk-text: #0d0d0d;
@@ -36,8 +39,10 @@
   --code-green: #116329;
   --code-yellow: #735c0f;
   --code-subst: #1f2328;
-  /* 右侧顶部标题栏高度（左侧 Logo 顶部与之下的正文区顶部对齐） */
-  --desk-header-height: 45px;
+  /* 顶部栏高度（左侧 Logo 顶部与之下的正文区顶部对齐） */
+  --desk-header-height: 38px;
+  /* 左侧常驻图标栏（活动栏）宽度 */
+  --desk-rail-width: 44px;
   --desk-radius-sm: 10px;
   --desk-radius: 16px;
   --desk-radius-lg: 22px;
@@ -59,6 +64,9 @@
   --desk-bg: #1e1e1e;
   --desk-bg-elevated: #262626;
   --desk-sidebar: #171717;
+  /* 左侧图标栏 + 顶部栏：同色且最深；展开的列表面板：略浅 */
+  --desk-chrome-bg: #101010;
+  --desk-panel-bg: #191919;
   --desk-border: #333333;
   --desk-border-soft: rgba(255, 255, 255, 0.09);
   --desk-text: #ececec;

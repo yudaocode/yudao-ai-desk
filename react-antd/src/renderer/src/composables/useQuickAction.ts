@@ -1,10 +1,10 @@
 /* 快捷操作执行器：命令面板和全局快捷键使用相同业务操作。 */
-import { useNavigate } from 'react-router-dom'
-import { useChatStore } from '../stores/chat'
-import { useLayoutStore } from '../stores/layout'
-import type { QuickAction } from '../../../shared/ipc'
+import { useNavPush } from '@renderer/composables/useNavHistory'
+import { useChatStore } from '@renderer/stores/chat'
+import { useLayoutStore } from '@renderer/stores/layout'
+import type { QuickAction } from '@shared/ipc'
 export function useQuickAction(): (action: QuickAction) => void {
-  const navigate = useNavigate()
+  const navigate = useNavPush()
   return (action) => {
     if (action === 'newChat') {
       useChatStore.getState().startNewChat()

@@ -8,9 +8,9 @@ import {
   guardPath,
   resolveTarget,
   setApprovalRequester
-} from '../../src/main/agent/sandbox'
-import { createBuiltinTools } from '../../src/main/agent/tools'
-import { buildModels, normalizeBaseUrl, USER_AGENT } from '../../src/main/agent/models'
+} from '../../src/main/agent/worker/sandbox'
+import { createBuiltinTools } from '../../src/main/agent/worker/tools'
+import { buildModels, normalizeBaseUrl, USER_AGENT } from '../../src/main/agent/worker/models'
 let directory: string, root: string, outside: string
 beforeEach(() => {
   directory = mkdtempSync(join(tmpdir(), 'desk-unit-'))

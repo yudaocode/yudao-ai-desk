@@ -1,0 +1,15 @@
+# 依赖与构建产物
+node_modules/
+out/
+dist/
+release/
+
+# 本地数据与日志
+*.log
+*.local
+*.sqlite
+*.sqlite3
+data/
+
+# 编辑器 / 系统
+.DS_Store

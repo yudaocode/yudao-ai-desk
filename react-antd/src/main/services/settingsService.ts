@@ -5,7 +5,7 @@
 
 import { getDb } from '../db'
 import { settingTable } from '../db/schema'
-import { DEFAULT_SHORTCUTS, type AppSettings } from '../../shared/ipc'
+import { DEFAULT_SHORTCUTS, type AppSettings } from '@shared/ipc'
 
 /* 默认设置 */
 const DEFAULTS: AppSettings = {

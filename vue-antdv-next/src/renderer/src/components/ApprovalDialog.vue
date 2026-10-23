@@ -4,9 +4,9 @@
  * （允许本次 / 本会话允许 / 拒绝），选择后回传主进程。
  */
 import { onBeforeUnmount, onMounted, ref } from 'vue'
-import { t } from '../i18n'
-import { api } from '../api'
-import type { ChatApprovalChoice, ChatApprovalPrompt } from '../../../shared/ipc'
+import { t } from '@renderer/i18n'
+import { api } from '@renderer/api'
+import type { ChatApprovalChoice, ChatApprovalPrompt } from '@shared/ipc'
 
 const prompt = ref<ChatApprovalPrompt | null>(null)
 /* 审批队列：并发会话同时越界时依次展示，避免后到请求覆盖前一个导致其永久挂起 */

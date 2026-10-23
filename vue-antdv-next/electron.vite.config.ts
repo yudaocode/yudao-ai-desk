@@ -9,7 +9,8 @@ export default defineConfig({
     plugins: [externalizeDepsPlugin()],
     resolve: {
       alias: {
-        '@main': resolve('src/main')
+        '@main': resolve('src/main'),
+        '@shared': resolve('src/shared')
       }
     },
     build: {
@@ -17,7 +18,7 @@ export default defineConfig({
         /* 双入口：主进程 + Agent 运行时进程（utilityProcess） */
         input: {
           index: resolve('src/main/index.ts'),
-          'agent/worker': resolve('src/main/agent/worker.ts')
+          'agent/worker/worker': resolve('src/main/agent/worker/worker.ts')
         }
       }
     }
@@ -29,6 +30,7 @@ export default defineConfig({
     resolve: {
       alias: {
         '@renderer': resolve('src/renderer/src'),
+        '@shared': resolve('src/shared'),
         '@': resolve('src/renderer/src')
       }
     },

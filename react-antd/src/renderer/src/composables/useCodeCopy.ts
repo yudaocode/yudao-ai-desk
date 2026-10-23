@@ -4,7 +4,7 @@
  *   - 复制成功后按钮短暂切换为「已复制」反馈。
  */
 
-import { t } from '../i18n'
+import { t } from '@renderer/i18n'
 
 /* 复制反馈持续时间（毫秒） */
 const FEEDBACK_MS = 1500

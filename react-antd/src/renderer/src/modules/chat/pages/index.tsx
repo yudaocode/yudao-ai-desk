@@ -1,30 +1,21 @@
 import './index.scss'
 /* 对话工作区：消息流、草稿、项目选择、终端与右侧任务面板。 */
-import { Fragment, useEffect, useRef, useState, type MouseEvent } from 'react'
+import { Fragment, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Dropdown, Input, Modal, message } from 'antd'
-import {
-  MenuFoldOutlined,
-  MenuUnfoldOutlined,
-  MoreOutlined,
-  EditOutlined,
-  DeleteOutlined,
-  DownOutlined,
-  FolderOutlined,
-  CodeOutlined,
-  LayoutOutlined
-} from '@ant-design/icons'
-import MessageItem from '../../../components/MessageItem'
-import ChatComposer, { type ChatComposerHandle } from '../../../components/ChatComposer'
-import EmptyState from '../../../components/EmptyState'
-import TerminalPanel from '../../../components/TerminalPanel'
-import RightPanel from '../../../components/panel/RightPanel'
-import { useChatStore } from '../../../stores/chat'
-import { useSettingsStore } from '../../../stores/settings'
-import { useLayoutStore } from '../../../stores/layout'
-import { useProjectStore } from '../../../stores/project'
-import { t } from '../../../i18n'
-import type { ChatMode } from '../../../../../shared/ipc'
+import { Dropdown, Modal, message } from 'antd'
+import { DownOutlined, FolderOutlined } from '@ant-design/icons'
+import MessageItem from '@renderer/modules/chat/components/MessageItem'
+import ChatComposer, { type ChatComposerHandle } from '@renderer/modules/chat/components/ChatComposer'
+import EmptyState from '@renderer/components/EmptyState'
+import TerminalPanel from '@renderer/modules/workspace/components/TerminalPanel'
+import RightPanel from '@renderer/modules/workspace/components/RightPanel'
+import { useChatStore } from '@renderer/stores/chat'
+import { useSettingsStore } from '@renderer/stores/settings'
+import { useLayoutStore } from '@renderer/stores/layout'
+import { useProjectStore } from '@renderer/stores/project'
+import { usePanelResize } from '@renderer/composables/usePanelResize'
+import { t } from '@renderer/i18n'
+import type { ChatMode } from '@shared/ipc'
 export default function ChatPage() {
   const navigate = useNavigate(),
     chat = useChatStore(),
@@ -34,8 +25,7 @@ export default function ChatPage() {
   const scrollRef = useRef<HTMLDivElement>(null),
     composerRef = useRef<ChatComposerHandle>(null),
     scrollFrame = useRef(0),
-    nearBottomRef = useRef(true),
-    resizeCleanup = useRef<(() => void) | null>(null)
+    nearBottomRef = useRef(true)
   const [nearBottom, setNearBottom] = useState(true),
     [terminalOpened, setTerminalOpened] = useState(layout.terminalVisible)
   const currentSession = chat.sessions.find((item) => item.id === chat.currentId),
@@ -70,7 +60,6 @@ export default function ChatPage() {
   useEffect(
     () => () => {
       cancelAnimationFrame(scrollFrame.current)
-      resizeCleanup.current?.()
     },
     []
   )
@@ -107,108 +96,15 @@ export default function ChatPage() {
       }
     })
   }
-  function onRenameCurrent(): void {
-    if (!currentSession) return
-    let value = currentSession.title
-    Modal.confirm({
-      title: t('chat.renameSession'),
-      content: (
-        <Input
-          defaultValue={value}
-          onChange={(event) => {
-            value = event.target.value
-          }}
-        />
-      ),
-      okText: t('common.confirm'),
-      cancelText: t('common.cancel'),
-      onOk: () => chat.renameSession(currentSession.id, value || currentSession.title)
-    })
-  }
-  function onDeleteCurrent(): void {
-    if (!currentSession) return
-    Modal.confirm({
-      title: t('chat.deleteSession'),
-      content: t('chat.deleteConfirm'),
-      okText: t('common.delete'),
-      cancelText: t('common.cancel'),
-      onOk: async () => {
-        await chat.removeSession(currentSession.id)
-        message.success(t('common.deleted'))
-      }
-    })
-  }
-  function startPanelResize(event: MouseEvent): void {
-    event.preventDefault()
-    resizeCleanup.current?.()
-    const startX = event.clientX,
-      startWidth = layout.rightPanelWidth
-    const onMove = (e: globalThis.MouseEvent) =>
-      layout.setRightPanelWidth(startWidth - e.clientX + startX)
-    const onUp = () => {
-      window.removeEventListener('mousemove', onMove)
-      window.removeEventListener('mouseup', onUp)
-      document.body.classList.remove('resizing')
-      resizeCleanup.current = null
-    }
-    resizeCleanup.current = onUp
-    window.addEventListener('mousemove', onMove)
-    window.addEventListener('mouseup', onUp)
-    document.body.classList.add('resizing')
-  }
+  /* 拖拽右侧栏左边缘调整宽度（统一复用 usePanelResize） */
+  const { startResize: startPanelResize } = usePanelResize({
+    getWidth: () => useLayoutStore.getState().rightPanelWidth,
+    setWidth: layout.setRightPanelWidth,
+    edge: 'right'
+  })
   const examples = ['chat.suggestion1', 'chat.suggestion2', 'chat.suggestion3']
   return (
     <div className="chat-page">
-      <header
-        className={`chat-header${settings.platform === 'darwin' && layout.sidebarCollapsed ? ' mac-collapsed' : ''}`}
-      >
-        <div className="chat-header-left">
-          <button
-            className="sidebar-toggle"
-            title={t(layout.sidebarCollapsed ? 'chat.expandSidebar' : 'chat.collapseSidebar')}
-            onClick={layout.toggleSidebar}
-          >
-            {layout.sidebarCollapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
-          </button>
-          <div className="chat-title-wrap">
-            <div className="chat-title">{currentSession?.title || t('chat.newChat')}</div>
-            {chat.currentId && (
-              <Dropdown
-                trigger={['click']}
-                menu={{
-                  items: [
-                    { key: 'rename', icon: <EditOutlined />, label: t('chat.renameSession') },
-                    { type: 'divider' },
-                    { key: 'delete', icon: <DeleteOutlined />, label: t('chat.deleteSession') }
-                  ],
-                  onClick: ({ key }) => {
-                    if (key === 'rename') onRenameCurrent()
-                    else onDeleteCurrent()
-                  }
-                }}
-              >
-                <MoreOutlined className="chat-title-more" title={t('common.actions')} />
-              </Dropdown>
-            )}
-          </div>
-        </div>
-        <div className="chat-header-right">
-          <button
-            className={`sidebar-toggle${layout.terminalVisible ? ' active' : ''}`}
-            title={t(layout.terminalVisible ? 'chat.hideTerminal' : 'chat.showTerminal')}
-            onClick={layout.toggleTerminal}
-          >
-            <CodeOutlined className="panel-icon" />
-          </button>
-          <button
-            className={`sidebar-toggle${layout.rightPanelVisible ? ' active' : ''}`}
-            title={t(layout.rightPanelVisible ? 'chat.hideSidePanel' : 'chat.showSidePanel')}
-            onClick={layout.toggleRightPanel}
-          >
-            <LayoutOutlined className="panel-icon" />
-          </button>
-        </div>
-      </header>
       <div className="chat-workspace">
         <div
           className={`chat-content${!hasMessages ? ' empty' : ''}`}
@@ -322,8 +218,14 @@ export default function ChatPage() {
             width: layout.rightPanelMaximized ? undefined : layout.rightPanelWidth
           }}
         >
+          {/* 左边缘拖拽手柄：拖拽调整侧栏宽度，双击恢复默认宽度（放大态下不可拖拽） */}
           {!layout.rightPanelMaximized && (
-            <div className="side-panel-resizer" onMouseDown={startPanelResize} />
+            <div
+              className="side-panel-resizer"
+              title={t('layout.resetPanelWidth')}
+              onMouseDown={startPanelResize}
+              onDoubleClick={layout.resetRightPanelWidth}
+            />
           )}
           <RightPanel root={terminalProject?.path} projectName={terminalProject?.name} />
         </aside>

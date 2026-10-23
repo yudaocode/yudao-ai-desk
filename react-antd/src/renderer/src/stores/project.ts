@@ -1,8 +1,8 @@
 /* 项目状态：项目 1:1 绑定本地目录，会话归属项目。 */
 import { create } from 'zustand'
-import { api } from '../api'
-import { t } from '../i18n'
-import type { ProjectDTO } from '../../../shared/ipc'
+import { api } from '@renderer/api'
+import { t } from '@renderer/i18n'
+import type { ProjectDTO } from '@shared/ipc'
 
 interface ProjectState {
   projects: ProjectDTO[]

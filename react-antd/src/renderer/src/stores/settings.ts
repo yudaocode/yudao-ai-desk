@@ -1,8 +1,8 @@
 /* 设置与供应商状态：沿用上游业务方法，React 状态通过 Zustand 更新 */
 import { create } from 'zustand'
 import { message } from 'antd'
-import { api } from '../api'
-import { setLanguage, t } from '../i18n'
+import { api } from '@renderer/api'
+import { setLanguage, t } from '@renderer/i18n'
 import type {
   AppSettings,
   ProviderDTO,
@@ -10,7 +10,7 @@ import type {
   RuntimeExecInput,
   RuntimeDetectResult,
   UpdateInfo
-} from '../../../shared/ipc'
+} from '@shared/ipc'
 
 interface SettingsState {
   settings: AppSettings
@@ -23,6 +23,8 @@ interface SettingsState {
   platform: string
   updateInfo: UpdateInfo | null
   updateChecking: boolean
+  activeTab: string
+  setActiveTab(tab: string): void
   applyTheme(): void
   load(): Promise<void>
   saveSettings(patch: Partial<AppSettings>): Promise<void>
@@ -65,6 +67,9 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   platform: '',
   updateInfo: null,
   updateChecking: false,
+  /* 系统设置子菜单当前分类（UI 选中态，供左侧子菜单与设置页共享） */
+  activeTab: 'general',
+  setActiveTab: (tab) => set({ activeTab: tab }),
   /* 应用主题到 DOM，保留原有 desk CSS 变量 */
   applyTheme: () => {
     const settings = get().settings
